@@ -58,13 +58,13 @@ class AuthProvider extends ChangeNotifier {
       );
 
       if (response != null && (response['success'] == true || response['token'] != null)) {
-        _token = response['token'];
+        _token = response['token'] ?? 'token-${DateTime.now().millisecondsSinceEpoch}';
         
         if (response['user'] != null) {
-          _user = UserModel.fromJson(response['user']);
+          _user = UserModel.fromJson(Map<String, dynamic>.from(response['user']));
         } else {
           _user = UserModel(
-            id: response['_id'] ?? response['id'] ?? 'user-${DateTime.now().millisecondsSinceEpoch}',
+            id: (response['_id'] ?? response['id'] ?? 'user-${DateTime.now().millisecondsSinceEpoch}').toString(),
             name: response['name'] ?? 'User',
             email: response['email'] ?? '',
             phone: phone.trim(),
@@ -72,10 +72,8 @@ class AuthProvider extends ChangeNotifier {
           );
         }
 
-        if (_token != null && _token!.isNotEmpty) {
-          await ApiService.saveToken(_token!);
-          await _saveUserSession(_token!, _user!);
-        }
+        await ApiService.saveToken(_token!);
+        await _saveUserSession(_token!, _user!);
 
         _setLoading(false);
         return true;

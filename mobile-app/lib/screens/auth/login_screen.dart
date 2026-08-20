@@ -74,16 +74,23 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showErrorDialog(String message) {
+    final isNotFound = message.toLowerCase().contains('user not found') ||
+        message.toLowerCase().contains('not found') ||
+        message.toLowerCase().contains('account');
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Row(
           children: [
-            const Icon(Icons.wifi_off_rounded, color: AppTheme.error),
+            Icon(
+              isNotFound ? Icons.person_add_rounded : Icons.info_outline_rounded,
+              color: isNotFound ? AppTheme.primaryDark : AppTheme.error,
+            ),
             const SizedBox(width: 10),
             Text(
-              'Connection Notice',
+              isNotFound ? 'Account Not Found' : 'Sign In Notice',
               style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
@@ -93,12 +100,14 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              message,
+              isNotFound
+                  ? 'No account exists for this phone number yet. Please register a new account or sign in with Instant Demo.'
+                  : message,
               style: GoogleFonts.plusJakartaSans(fontSize: 14),
             ),
             const SizedBox(height: 14),
             Text(
-              'Current Server Target: ${ApiConstants.baseUrl}',
+              'Target Server: ${ApiConstants.baseUrl}',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -108,14 +117,25 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _showIpConfigDialog();
-            },
-            child: const Text('Change IP'),
-          ),
-          ElevatedButton(
+          if (isNotFound)
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                );
+              },
+              child: const Text('Create Account'),
+            )
+          else
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showIpConfigDialog();
+              },
+              child: const Text('Change Server'),
+            ),
+          OutlinedButton(
             onPressed: () {
               Navigator.of(context).pop();
               _handleDemoLogin();
