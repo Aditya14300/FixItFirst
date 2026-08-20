@@ -52,14 +52,20 @@ class ServiceProvider extends ChangeNotifier {
 
     try {
       final response = await ApiService.get(ApiConstants.categories);
-      if (response['success'] == true && response['categories'] != null) {
-        final List list = response['categories'];
+      if (response != null && (response['success'] == true || response['categories'] != null)) {
+        final List list = response['categories'] ?? (response is List ? response : []);
         _categories = list.map((json) => CategoryModel.fromJson(json)).toList();
         _isOffline = false;
         _error = null;
       }
+    } on ApiException catch (e) {
+      _error = e.message;
+      _isOffline = true;
+      if (_categories.isEmpty) {
+        _categories = _getMockCategories();
+      }
     } catch (e) {
-      _error = e.toString();
+      _error = e.toString().replaceAll('Exception: ', '');
       _isOffline = true;
       if (_categories.isEmpty) {
         _categories = _getMockCategories();
@@ -80,14 +86,20 @@ class ServiceProvider extends ChangeNotifier {
 
     try {
       final response = await ApiService.get(ApiConstants.services);
-      if (response['success'] == true && response['services'] != null) {
-        final List list = response['services'];
+      if (response != null && (response['success'] == true || response['services'] != null)) {
+        final List list = response['services'] ?? (response is List ? response : []);
         _services = list.map((json) => ServiceModel.fromJson(json)).toList();
         _isOffline = false;
         _error = null;
       }
+    } on ApiException catch (e) {
+      _error = e.message;
+      _isOffline = true;
+      if (_services.isEmpty) {
+        _services = _getMockServices();
+      }
     } catch (e) {
-      _error = e.toString();
+      _error = e.toString().replaceAll('Exception: ', '');
       _isOffline = true;
       if (_services.isEmpty) {
         _services = _getMockServices();

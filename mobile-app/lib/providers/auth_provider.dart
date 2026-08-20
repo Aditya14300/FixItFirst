@@ -22,20 +22,21 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> _loadStoredSession() async {
     await ApiConstants.loadCustomIp();
+    _token = await ApiService.getToken();
+
     final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString('auth_token');
-    
     final storedName = prefs.getString('user_name');
     final storedPhone = prefs.getString('user_phone');
     final storedEmail = prefs.getString('user_email');
     final storedRole = prefs.getString('user_role');
+    final storedId = prefs.getString('user_id');
 
-    if (_token != null && storedName != null) {
+    if (_token != null && _token!.isNotEmpty && storedName != null) {
       _user = UserModel(
-        id: 'user-${DateTime.now().millisecondsSinceEpoch}',
+        id: storedId ?? 'user-${DateTime.now().millisecondsSinceEpoch}',
         name: storedName,
-        email: storedEmail ?? 'user@fixitfirst.com',
-        phone: storedPhone ?? '9876543210',
+        email: storedEmail ?? '',
+        phone: storedPhone ?? '',
         role: storedRole ?? 'customer',
       );
       notifyListeners();
@@ -50,28 +51,46 @@ class AuthProvider extends ChangeNotifier {
       final response = await ApiService.post(
         ApiConstants.login,
         {
-          'phone': phone,
+          'phone': phone.trim(),
           'password': password,
         },
+        requireAuth: false,
       );
 
-      if (response['success'] == true) {
+      if (response != null && (response['success'] == true || response['token'] != null)) {
         _token = response['token'];
-        _user = UserModel.fromJson(response['user']);
+        
+        if (response['user'] != null) {
+          _user = UserModel.fromJson(response['user']);
+        } else {
+          _user = UserModel(
+            id: response['_id'] ?? response['id'] ?? 'user-${DateTime.now().millisecondsSinceEpoch}',
+            name: response['name'] ?? 'User',
+            email: response['email'] ?? '',
+            phone: phone.trim(),
+            role: response['role'] ?? 'customer',
+          );
+        }
 
-        await _saveUserSession(_token!, _user!);
+        if (_token != null && _token!.isNotEmpty) {
+          await ApiService.saveToken(_token!);
+          await _saveUserSession(_token!, _user!);
+        }
 
         _setLoading(false);
         return true;
       } else {
-        _setError(response['message'] ?? 'Login failed');
+        final serverMsg = response?['message'] ?? response?['error'] ?? 'Login failed. Please verify credentials.';
+        _setError(serverMsg);
         _setLoading(false);
         return false;
       }
+    } on ApiException catch (e) {
+      _setError(e.message);
+      _setLoading(false);
+      return false;
     } catch (e) {
-      // Catch network connection error & provide fallback demo login
-      final cleanMsg = e.toString().replaceAll('Exception: ', '');
-      _setError(cleanMsg);
+      _setError('Login failed: ${e.toString().replaceAll('Exception: ', '')}');
       _setLoading(false);
       return false;
     }
@@ -93,6 +112,7 @@ class AuthProvider extends ChangeNotifier {
       isVerified: true,
     );
 
+    await ApiService.saveToken(_token!);
     await _saveUserSession(_token!, _user!);
 
     _setLoading(false);
@@ -122,20 +142,44 @@ class AuthProvider extends ChangeNotifier {
       final response = await ApiService.post(
         ApiConstants.register,
         body,
+        requireAuth: false,
       );
 
-      if (response != null && response['success'] == true) {
-        // Automatically perform real login to obtain JWT token & user session from database
+      if (response != null && (response['success'] == true || response['token'] != null || response['user'] != null)) {
+        // If backend directly returns user session & token upon registration
+        if (response['token'] != null) {
+          _token = response['token'];
+          if (response['user'] != null) {
+            _user = UserModel.fromJson(response['user']);
+          } else {
+            _user = UserModel(
+              id: response['_id'] ?? response['id'] ?? 'user-${DateTime.now().millisecondsSinceEpoch}',
+              name: name.trim(),
+              email: email.trim(),
+              phone: phone.trim(),
+              role: 'customer',
+            );
+          }
+          await ApiService.saveToken(_token!);
+          await _saveUserSession(_token!, _user!);
+          _setLoading(false);
+          return true;
+        }
+
+        // Auto-login to obtain session if registration succeeds
         return await login(phone.trim(), password);
       } else {
-        _setError(response?['message'] ?? 'Registration failed');
+        final serverMsg = response?['message'] ?? response?['error'] ?? 'Registration failed.';
+        _setError(serverMsg);
         _setLoading(false);
         return false;
       }
+    } on ApiException catch (e) {
+      _setError(e.message);
+      _setLoading(false);
+      return false;
     } catch (e) {
-      final cleanMsg = e.toString().replaceAll('Exception: ', '');
-      debugPrint('Registration API Error: $cleanMsg');
-      _setError(cleanMsg);
+      _setError(e.toString().replaceAll('Exception: ', ''));
       _setLoading(false);
       return false;
     }
@@ -144,6 +188,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _saveUserSession(String tokenStr, UserModel userObj) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', tokenStr);
+    await prefs.setString('user_id', userObj.id);
     await prefs.setString('user_name', userObj.name);
     await prefs.setString('user_phone', userObj.phone);
     await prefs.setString('user_email', userObj.email);
@@ -154,6 +199,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> logout() async {
     _user = null;
     _token = null;
+    await ApiService.removeToken();
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     notifyListeners();

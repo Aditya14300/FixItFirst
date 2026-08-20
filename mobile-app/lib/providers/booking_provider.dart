@@ -31,7 +31,7 @@ class BookingProvider extends ChangeNotifier {
 
   void _startRealtimePolling() {
     _pollingTimer?.cancel();
-    _pollingTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+    _pollingTimer = Timer.periodic(const Duration(seconds: 8), (_) {
       fetchBookings(userPhone: _activeUserPhone, isSilent: true);
     });
   }
@@ -53,12 +53,16 @@ class BookingProvider extends ChangeNotifier {
           ? '/bookings?phone=$_activeUserPhone'
           : '/bookings';
 
-      final res = await ApiService.get(endpoint);
-      if (res['success'] == true && res['bookings'] != null) {
-        final List dynamicList = res['bookings'];
+      final res = await ApiService.get(endpoint, requireAuth: true);
+      if (res != null && (res['success'] == true || res['bookings'] != null)) {
+        final List dynamicList = res['bookings'] ?? (res is List ? res : []);
         _bookings.clear();
         _bookings.addAll(dynamicList.map((j) => BookingModel.fromJson(j)));
+        _error = null;
       }
+    } on ApiException catch (e) {
+      if (!isSilent) _error = e.message;
+      debugPrint('Booking fetch error: ${e.message}');
     } catch (e) {
       debugPrint('Live MongoDB booking fetch failed: $e');
     } finally {
@@ -97,9 +101,10 @@ class BookingProvider extends ChangeNotifier {
     };
 
     try {
-      final res = await ApiService.post('/bookings', payload);
-      if (res['success'] == true && res['booking'] != null) {
-        final newBooking = BookingModel.fromJson(res['booking']);
+      final res = await ApiService.post('/bookings', payload, requireAuth: true);
+      if (res != null && (res['success'] == true || res['booking'] != null)) {
+        final bookingMap = res['booking'] ?? res;
+        final newBooking = BookingModel.fromJson(bookingMap);
         _bookings.insert(0, newBooking);
       } else {
         final fallbackBooking = BookingModel(
@@ -119,23 +124,16 @@ class BookingProvider extends ChangeNotifier {
       notifyListeners();
       fetchBookings(userPhone: phone, isSilent: true);
       return true;
-    } catch (e) {
-      _error = 'Booking Error: $e';
-      final fallbackBooking = BookingModel(
-        id: 'BK-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
-        service: service,
-        user: user,
-        date: date,
-        timeSlot: timeSlot,
-        address: address,
-        status: 'pending',
-        totalAmount: service.finalPrice,
-        notes: notes,
-      );
-      _bookings.insert(0, fallbackBooking);
+    } on ApiException catch (e) {
+      _error = e.message;
       _isSubmitting = false;
       notifyListeners();
-      return true;
+      return false;
+    } catch (e) {
+      _error = 'Booking failed: ${e.toString().replaceAll('Exception: ', '')}';
+      _isSubmitting = false;
+      notifyListeners();
+      return false;
     }
   }
 
@@ -159,7 +157,7 @@ class BookingProvider extends ChangeNotifier {
       notifyListeners();
 
       try {
-        await ApiService.put('/bookings/$bookingId/cancel', {});
+        await ApiService.put('/bookings/$bookingId/cancel', {}, requireAuth: true);
       } catch (e) {
         debugPrint('Cancellation API sync failed: $e');
       }

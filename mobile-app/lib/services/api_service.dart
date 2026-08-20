@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/api_constants.dart';
@@ -16,11 +17,26 @@ class ApiException implements Exception {
 }
 
 class ApiService {
+  // Render free instance timeout: 60-second minimum to handle cold starts (~50s wake-up time)
+  static const Duration _timeoutDuration = Duration(seconds: 60);
+
+  // --- Token Management ---
+  static Future<void> saveToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth_token', token);
+  }
+
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('auth_token');
   }
 
+  static Future<void> removeToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+  }
+
+  // --- Request Headers ---
   static Future<Map<String, String>> _getHeaders({bool requireAuth = true}) async {
     final headers = <String, String>{
       'Content-Type': 'application/json',
@@ -37,140 +53,174 @@ class ApiService {
     return headers;
   }
 
+  // --- GET Request ---
   static Future<dynamic> get(String endpoint, {bool requireAuth = false}) async {
     final headers = await _getHeaders(requireAuth: requireAuth);
+    final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
 
     try {
-      final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
       final response = await http
           .get(url, headers: headers)
-          .timeout(const Duration(seconds: 5));
+          .timeout(_timeoutDuration);
       return _handleResponse(response);
+    } on TimeoutException {
+      throw ApiException(
+        'Server is waking up (Render backend cold start). Please wait a moment and try again.',
+        statusCode: 504,
+      );
+    } on SocketException {
+      throw ApiException(
+        'No Internet connection. Please check your network connectivity and try again.',
+        statusCode: 503,
+      );
     } on ApiException {
       rethrow;
     } catch (e) {
-      if (Platform.isAndroid) {
-        final fallbacks = [
-          'https://fixitfirst.onrender.com/api$endpoint',
-          'http://10.250.185.62:5000/api$endpoint',
-          'http://10.0.2.2:5000/api$endpoint',
-          'http://127.0.0.1:5000/api$endpoint',
-          'http://localhost:5000/api$endpoint',
-        ];
-        for (var fb in fallbacks) {
-          try {
-            final response = await http
-                .get(Uri.parse(fb), headers: headers)
-                .timeout(const Duration(seconds: 4));
-            return _handleResponse(response);
-          } on ApiException {
-            rethrow;
-          } catch (_) {}
-        }
-      }
-      throw ApiException('Cannot reach backend server at ${ApiConstants.baseUrl}. Please check your internet connection.');
+      throw ApiException(
+        _cleanErrorMessage(e.toString()),
+        statusCode: 500,
+      );
     }
   }
 
-  static Future<dynamic> post(String endpoint, Map<String, dynamic> body,
-      {bool requireAuth = false}) async {
+  // --- POST Request ---
+  static Future<dynamic> post(
+    String endpoint,
+    Map<String, dynamic> body, {
+    bool requireAuth = false,
+  }) async {
     final headers = await _getHeaders(requireAuth: requireAuth);
+    final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
 
     try {
-      final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
       final response = await http
           .post(
             url,
             headers: headers,
             body: jsonEncode(body),
           )
-          .timeout(const Duration(seconds: 5));
+          .timeout(_timeoutDuration);
       return _handleResponse(response);
+    } on TimeoutException {
+      throw ApiException(
+        'Server is waking up (Render backend cold start). Please wait a moment and try again.',
+        statusCode: 504,
+      );
+    } on SocketException {
+      throw ApiException(
+        'No Internet connection. Please check your network connectivity and try again.',
+        statusCode: 503,
+      );
     } on ApiException {
       rethrow;
     } catch (e) {
-      if (Platform.isAndroid) {
-        final fallbacks = [
-          'https://fixitfirst.onrender.com/api$endpoint',
-          'http://10.250.185.62:5000/api$endpoint',
-          'http://10.0.2.2:5000/api$endpoint',
-          'http://127.0.0.1:5000/api$endpoint',
-          'http://localhost:5000/api$endpoint',
-        ];
-        for (var fb in fallbacks) {
-          try {
-            final response = await http
-                .post(
-                  Uri.parse(fb),
-                  headers: headers,
-                  body: jsonEncode(body),
-                )
-                .timeout(const Duration(seconds: 4));
-            return _handleResponse(response);
-          } on ApiException {
-            rethrow;
-          } catch (_) {}
-        }
-      }
-      throw ApiException('Cannot reach backend server at ${ApiConstants.baseUrl}. Please check your internet connection.');
+      throw ApiException(
+        _cleanErrorMessage(e.toString()),
+        statusCode: 500,
+      );
     }
   }
 
-  static Future<dynamic> put(String endpoint, Map<String, dynamic> body,
-      {bool requireAuth = false}) async {
+  // --- PUT Request ---
+  static Future<dynamic> put(
+    String endpoint,
+    Map<String, dynamic> body, {
+    bool requireAuth = false,
+  }) async {
     final headers = await _getHeaders(requireAuth: requireAuth);
+    final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
 
     try {
-      final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
       final response = await http
           .put(
             url,
             headers: headers,
             body: jsonEncode(body),
           )
-          .timeout(const Duration(seconds: 5));
+          .timeout(_timeoutDuration);
       return _handleResponse(response);
+    } on TimeoutException {
+      throw ApiException(
+        'Server is waking up (Render backend cold start). Please wait a moment and try again.',
+        statusCode: 504,
+      );
+    } on SocketException {
+      throw ApiException(
+        'No Internet connection. Please check your network connectivity and try again.',
+        statusCode: 503,
+      );
     } on ApiException {
       rethrow;
     } catch (e) {
-      if (Platform.isAndroid) {
-        final fallbacks = [
-          'https://fixitfirst.onrender.com/api$endpoint',
-          'http://10.250.185.62:5000/api$endpoint',
-          'http://10.0.2.2:5000/api$endpoint',
-          'http://127.0.0.1:5000/api$endpoint',
-          'http://localhost:5000/api$endpoint',
-        ];
-        for (var fb in fallbacks) {
-          try {
-            final response = await http
-                .put(
-                  Uri.parse(fb),
-                  headers: headers,
-                  body: jsonEncode(body),
-                )
-                .timeout(const Duration(seconds: 4));
-            return _handleResponse(response);
-          } on ApiException {
-            rethrow;
-          } catch (_) {}
-        }
-      }
-      throw ApiException('Cannot reach backend server at ${ApiConstants.baseUrl}. Please check your internet connection.');
+      throw ApiException(
+        _cleanErrorMessage(e.toString()),
+        statusCode: 500,
+      );
     }
   }
 
-  static dynamic _handleResponse(http.Response response) {
+  // --- DELETE Request ---
+  static Future<dynamic> delete(
+    String endpoint, {
+    bool requireAuth = false,
+  }) async {
+    final headers = await _getHeaders(requireAuth: requireAuth);
+    final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+
     try {
-      final data = jsonDecode(response.body);
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return data;
-      } else {
-        final message = data['message'] ?? 'Request failed with status ${response.statusCode}';
-        throw ApiException(message, statusCode: response.statusCode);
+      final response = await http
+          .delete(url, headers: headers)
+          .timeout(_timeoutDuration);
+      return _handleResponse(response);
+    } on TimeoutException {
+      throw ApiException(
+        'Server is waking up (Render backend cold start). Please wait a moment and try again.',
+        statusCode: 504,
+      );
+    } on SocketException {
+      throw ApiException(
+        'No Internet connection. Please check your network connectivity and try again.',
+        statusCode: 503,
+      );
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(
+        _cleanErrorMessage(e.toString()),
+        statusCode: 500,
+      );
+    }
+  }
+
+  // --- Response Parsing & Error Extraction ---
+  static dynamic _handleResponse(http.Response response) {
+    dynamic data;
+    try {
+      if (response.body.isNotEmpty) {
+        data = jsonDecode(response.body);
       }
     } on FormatException {
-      throw ApiException('Invalid response format from server (${response.statusCode})');
+      throw ApiException(
+        'Invalid server response format (${response.statusCode})',
+        statusCode: response.statusCode,
+      );
     }
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return data ?? {'success': true};
+    } else {
+      String message = 'Request failed with status ${response.statusCode}';
+      if (data is Map) {
+        message = data['message'] ?? data['error'] ?? data['msg'] ?? message;
+      }
+      throw ApiException(message, statusCode: response.statusCode);
+    }
+  }
+
+  static String _cleanErrorMessage(String rawMsg) {
+    return rawMsg
+        .replaceAll('Exception: ', '')
+        .replaceAll('ClientException with ', '')
+        .replaceAll('SocketException: ', '');
   }
 }
