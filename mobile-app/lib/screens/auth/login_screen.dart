@@ -136,8 +136,8 @@ class _LoginScreenState extends State<LoginScreen> {
         content: TextField(
           controller: ipController,
           decoration: const InputDecoration(
-            hintText: 'e.g. 10.206.75.58',
-            labelText: 'PC IP Address',
+            hintText: 'e.g. https://fixitfirst.onrender.com',
+            labelText: 'Server URL / IP Address',
           ),
         ),
         actions: [
