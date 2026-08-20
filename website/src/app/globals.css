@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+/* 1. YEH LINE ZAROORI HAI: Yeh Tailwind ko batati hai ki jab 'dark' class lage, tab dark mode chalana hai */
+@variant dark (&:is(.dark *));
+
+/* Light Mode ke default colors */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+/* 2. Dark Mode ke colors (Jab button click hoga toh yeh apply hoga) */
+.dark {
+  --background: #030712; /* FixitFirst ka premium dark color */
+  --foreground: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth fade effect */
+}
+
+/* HIDE SCROLLBAR GLOBALLY (100% Guaranteed) */
+
+*::-webkit-scrollbar {
+  display: none !important;
+}
+
+html, body, * {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}

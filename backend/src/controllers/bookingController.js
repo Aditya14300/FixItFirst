@@ -1,0 +1,139 @@
+const Booking = require("../models/Booking");
+
+// Get bookings (filtered by customerPhone query if provided, or all for admin)
+const getBookings = async (req, res) => {
+  try {
+    const { phone, customerPhone } = req.query;
+    let query = {};
+    const targetPhone = phone || customerPhone;
+
+    if (targetPhone) {
+      query.customerPhone = targetPhone;
+    }
+
+    const bookings = await Booking.find(query).sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      count: bookings.length,
+      bookings,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Create a booking
+const createBooking = async (req, res) => {
+  try {
+    const { customerName, customerPhone, serviceName, date, timeSlot, address, amount, notes } = req.body;
+
+    if (!customerName || !customerPhone || !serviceName || !date || !timeSlot || !address || !amount) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required booking fields",
+      });
+    }
+
+    const cleanCustomerName = String(customerName).trim().substring(0, 50);
+    const cleanCustomerPhone = String(customerPhone).trim().substring(0, 15);
+    const cleanServiceName = String(serviceName).trim().substring(0, 80);
+    const cleanAddress = String(address).trim().substring(0, 150);
+    const cleanNotes = notes ? String(notes).trim().substring(0, 250) : "";
+    const cleanAmount = Number(amount);
+
+    const booking = await Booking.create({
+      customerName: cleanCustomerName,
+      customerPhone: cleanCustomerPhone,
+      serviceName: cleanServiceName,
+      date,
+      timeSlot,
+      address: cleanAddress,
+      amount: cleanAmount,
+      notes: cleanNotes,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Booking created successfully",
+      booking,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Update booking status
+const updateBookingStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const booking = await Booking.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true, runValidators: true }
+    );
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Booking status updated",
+      booking,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Cancel a booking by customer
+const cancelBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const booking = await Booking.findByIdAndUpdate(
+      id,
+      { status: "cancelled" },
+      { new: true }
+    );
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Booking cancelled successfully",
+      booking,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+module.exports = {
+  getBookings,
+  createBooking,
+  updateBookingStatus,
+  cancelBooking,
+};

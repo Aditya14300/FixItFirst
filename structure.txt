@@ -1,0 +1,19 @@
+backend/
+│
+├── src/
+│   ├── config/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── services/
+│   ├── utils/
+│   ├── validators/
+│   ├── app.js
+│   └── server.js
+│
+├── uploads/
+├── .env
+├── .gitignore
+├── package.json
+└── README.md
