@@ -10,14 +10,31 @@ class ApiConstants {
     final prefs = await SharedPreferences.getInstance();
     final savedIp = prefs.getString('custom_server_ip');
     if (savedIp != null && savedIp.isNotEmpty) {
-      _customIp = savedIp;
+      // Clear legacy/old local IP overrides so the app uses live production Render URL
+      if (savedIp.contains('10.206.75.58') || savedIp.contains('10.250.185.62') || savedIp.contains(':5000')) {
+        await prefs.remove('custom_server_ip');
+        _customIp = '';
+      } else {
+        _customIp = savedIp;
+      }
     }
   }
 
-  static Future<void> setCustomIp(String ip) async {
-    _customIp = ip.trim();
+  static Future<void> resetCustomIp() async {
+    _customIp = '';
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('custom_server_ip', _customIp);
+    await prefs.remove('custom_server_ip');
+  }
+
+  static Future<void> setCustomIp(String ip) async {
+    final trimmed = ip.trim();
+    if (trimmed.isEmpty || trimmed.contains('10.206.75.58') || trimmed.contains('10.250.185.62')) {
+      await resetCustomIp();
+    } else {
+      _customIp = trimmed;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('custom_server_ip', _customIp);
+    }
   }
 
   static String get customIp => _customIp;
