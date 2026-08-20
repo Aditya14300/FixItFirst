@@ -192,13 +192,6 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sign In'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_ethernet_rounded),
-            tooltip: 'Configure Backend IP',
-            onPressed: _showIpConfigDialog,
-          ),
-        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
