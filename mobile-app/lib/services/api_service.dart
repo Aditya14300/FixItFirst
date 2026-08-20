@@ -51,6 +51,7 @@ class ApiService {
     } catch (e) {
       if (Platform.isAndroid) {
         final fallbacks = [
+          'https://fixitfirst.onrender.com/api$endpoint',
           'http://10.250.185.62:5000/api$endpoint',
           'http://10.0.2.2:5000/api$endpoint',
           'http://127.0.0.1:5000/api$endpoint',
@@ -67,7 +68,7 @@ class ApiService {
           } catch (_) {}
         }
       }
-      throw ApiException('Cannot reach backend server. Please verify backend server on port 5000 is running.');
+      throw ApiException('Cannot reach backend server at ${ApiConstants.baseUrl}. Please check your internet connection.');
     }
   }
 
@@ -90,6 +91,7 @@ class ApiService {
     } catch (e) {
       if (Platform.isAndroid) {
         final fallbacks = [
+          'https://fixitfirst.onrender.com/api$endpoint',
           'http://10.250.185.62:5000/api$endpoint',
           'http://10.0.2.2:5000/api$endpoint',
           'http://127.0.0.1:5000/api$endpoint',
@@ -110,7 +112,7 @@ class ApiService {
           } catch (_) {}
         }
       }
-      throw ApiException('Cannot reach backend server. Please verify backend server on port 5000 is running.');
+      throw ApiException('Cannot reach backend server at ${ApiConstants.baseUrl}. Please check your internet connection.');
     }
   }
 
@@ -133,6 +135,7 @@ class ApiService {
     } catch (e) {
       if (Platform.isAndroid) {
         final fallbacks = [
+          'https://fixitfirst.onrender.com/api$endpoint',
           'http://10.250.185.62:5000/api$endpoint',
           'http://10.0.2.2:5000/api$endpoint',
           'http://127.0.0.1:5000/api$endpoint',
@@ -153,7 +156,7 @@ class ApiService {
           } catch (_) {}
         }
       }
-      throw ApiException('Cannot reach backend server. Please verify backend server on port 5000 is running.');
+      throw ApiException('Cannot reach backend server at ${ApiConstants.baseUrl}. Please check your internet connection.');
     }
   }
 

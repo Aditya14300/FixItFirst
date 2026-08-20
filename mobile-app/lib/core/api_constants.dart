@@ -3,7 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiConstants {
-  static String _customIp = '10.250.185.62'; // PC Local Wi-Fi IP for Physical Android Phone / Network
+  static const String liveBaseUrl = 'https://fixitfirst.onrender.com/api';
+  static String _customIp = '';
 
   static Future<void> loadCustomIp() async {
     final prefs = await SharedPreferences.getInstance();
@@ -21,16 +22,15 @@ class ApiConstants {
 
   static String get customIp => _customIp;
 
-  // Dynamically resolve localhost vs local IP vs Android Emulator
+  // Base URL pointing to deployed Render backend by default
   static String get baseUrl {
-    if (kIsWeb) {
-      return 'http://localhost:5000/api';
-    } else if (Platform.isAndroid) {
-      // Use configured IP for Physical Android Phone (10.206.75.58)
+    if (_customIp.isNotEmpty) {
+      if (_customIp.startsWith('http://') || _customIp.startsWith('https://')) {
+        return _customIp.endsWith('/api') ? _customIp : '$_customIp/api';
+      }
       return 'http://$_customIp:5000/api';
-    } else {
-      return 'http://localhost:5000/api';
     }
+    return liveBaseUrl;
   }
 
   // Backup URL for Emulator

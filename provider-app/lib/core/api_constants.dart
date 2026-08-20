@@ -1,6 +1,6 @@
 class ApiConstants {
-  // Base backend URL (use localhost for web/desktop, 10.0.2.2 for Android emulator)
-  static const String baseUrl = 'http://localhost:5000/api';
+  // Base backend URL (deployed on Render)
+  static const String baseUrl = 'https://fixitfirst.onrender.com/api';
 
   // Auth Endpoints
   static const String loginEndpoint = '$baseUrl/auth/login';
