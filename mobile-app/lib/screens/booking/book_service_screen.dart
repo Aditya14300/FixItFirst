@@ -78,6 +78,11 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
     super.dispose();
   }
 
+  List<DateTime> _generate6Dates() {
+    final now = DateTime.now();
+    return List.generate(6, (index) => now.add(Duration(days: index)));
+  }
+
   void _handleConfirmBooking() async {
     if (_formKey.currentState!.validate()) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -186,13 +191,132 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
     );
   }
 
+  Widget _build6DateSquareGrid(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+    final textSecondaryColor = isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary;
+    final cardBgColor = isDark ? AppTheme.darkSurface : Colors.white;
+    final cardBorderColor = isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
+
+    final dates = _generate6Dates();
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 1.15,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+      ),
+      itemCount: 6,
+      itemBuilder: (context, index) {
+        final date = dates[index];
+        final isSelected = DateFormat('yyyy-MM-dd').format(_selectedDate) ==
+            DateFormat('yyyy-MM-dd').format(date);
+
+        String dayLabel;
+        if (index == 0) {
+          dayLabel = 'Today';
+        } else if (index == 1) {
+          dayLabel = 'Tomorrow';
+        } else {
+          dayLabel = DateFormat('EEE').format(date); // e.g. Mon, Tue
+        }
+
+        final dayNum = DateFormat('dd').format(date); // e.g. 23
+        final monthStr = DateFormat('MMM').format(date); // e.g. Aug
+
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              _selectedDate = date;
+            });
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              color: isSelected ? AppTheme.primary : cardBgColor,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isSelected ? AppTheme.primaryDark : cardBorderColor,
+                width: isSelected ? 2.0 : 1.0,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: AppTheme.primary.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      )
+                    ]
+                  : [],
+            ),
+            child: Stack(
+              children: [
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        dayLabel.toUpperCase(),
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? const Color(0xFF0F172A) : AppTheme.primaryDark,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        dayNum,
+                        style: GoogleFonts.outfit(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: isSelected ? const Color(0xFF0F172A) : textPrimaryColor,
+                        ),
+                      ),
+                      Text(
+                        monthStr,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isSelected ? const Color(0xFF0F172A) : textSecondaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isSelected)
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF0F172A),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check,
+                        size: 10,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bookingProvider = Provider.of<BookingProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
-    final textSecondaryColor = isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary;
     final cardBgColor = isDark ? AppTheme.darkSurface : Colors.white;
     final cardBorderColor = isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
 
@@ -252,58 +376,45 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Date Picker
-              Text(
-                'Select Date',
-                style: GoogleFonts.outfit(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimaryColor,
-                ),
+              // Date Picker Header with Calendar Button
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Select Date',
+                    style: GoogleFonts.outfit(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimaryColor,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _selectedDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 30)),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          _selectedDate = picked;
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.calendar_month_outlined, size: 16),
+                    label: const Text('More Dates'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppTheme.primaryDark,
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 10),
-              GestureDetector(
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: _selectedDate,
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(const Duration(days: 30)),
-                  );
-                  if (picked != null) {
-                    setState(() {
-                      _selectedDate = picked;
-                    });
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: cardBgColor,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: cardBorderColor),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          DateFormat('EEEE, MMMM d, yyyy').format(_selectedDate),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: textPrimaryColor,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.calendar_today_rounded, color: AppTheme.primaryDark),
-                    ],
-                  ),
-                ),
-              ),
+
+              // 6 Date Interactive Square Grid
+              _build6DateSquareGrid(context),
               const SizedBox(height: 24),
 
               // Time Slot Chips
