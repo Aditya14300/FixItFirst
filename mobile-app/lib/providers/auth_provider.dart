@@ -13,6 +13,8 @@ class AuthProvider extends ChangeNotifier {
   UserModel? get user => _user;
   String? get token => _token;
   bool get isAuthenticated => _token != null && _user != null;
+  bool get isDemoUser => _token != null && (_token!.startsWith('demo-token') || _user?.id == 'demo-101');
+  bool get isRealUser => isAuthenticated && !isDemoUser;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 

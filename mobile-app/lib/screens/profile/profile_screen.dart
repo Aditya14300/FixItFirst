@@ -15,6 +15,12 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final cardBgColor = isDark ? AppTheme.darkSurface : Colors.white;
+    final cardBorderColor = isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
+    final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+    final textSecondaryColor = isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary;
 
     return Scaffold(
       appBar: AppBar(
@@ -24,16 +30,16 @@ class ProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // User / Guest Header Card
+            // User / Guest / Demo Header Card
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardBgColor,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppTheme.border),
+                border: Border.all(color: cardBorderColor),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   )
@@ -43,15 +49,17 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 32,
-                    backgroundColor: AppTheme.primary.withValues(alpha: 0.12),
+                    backgroundColor: AppTheme.primaryDark,
                     child: Text(
-                      authProvider.isAuthenticated && user != null
+                      authProvider.isRealUser && user != null
                           ? user.name.substring(0, 1).toUpperCase()
-                          : 'G',
+                          : authProvider.isDemoUser
+                              ? 'D'
+                              : 'G',
                       style: GoogleFonts.outfit(
-                        fontSize: 28,
+                        fontSize: 26,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.primary,
+                        color: const Color(0xFF0F172A),
                       ),
                     ),
                   ),
@@ -61,23 +69,27 @@ class ProfileScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          authProvider.isAuthenticated && user != null
+                          authProvider.isRealUser && user != null
                               ? user.name
-                              : 'Guest User',
+                              : authProvider.isDemoUser
+                                  ? (user?.name ?? 'Demo User')
+                                  : 'Guest User',
                           style: GoogleFonts.outfit(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary,
+                            color: textPrimaryColor,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          authProvider.isAuthenticated && user != null
+                          authProvider.isRealUser && user != null
                               ? user.phone
-                              : 'Log in or sign up for full access',
+                              : authProvider.isDemoUser
+                                  ? 'Demo Account (Sign in for full access)'
+                                  : 'Log in or sign up for full access',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
-                            color: AppTheme.textSecondary,
+                            color: textSecondaryColor,
                           ),
                         ),
                       ],
@@ -88,28 +100,40 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Guest User Auth Options (Shown prominently when not authenticated)
-            if (!authProvider.isAuthenticated) ...[
+            // Prominent Login & Sign Up Section (Shown for Demo users and Guest users)
+            if (!authProvider.isRealUser) ...[
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.06),
+                  color: isDark
+                      ? AppTheme.darkSurface
+                      : AppTheme.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: isDark
+                        ? AppTheme.darkBorder
+                        : AppTheme.primary.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.account_circle_rounded, color: AppTheme.primary, size: 24),
+                        const Icon(
+                          Icons.account_circle_rounded,
+                          color: AppTheme.primaryDark,
+                          size: 24,
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Get started with FixItFirst',
+                            authProvider.isDemoUser
+                                ? 'Sign in to access your profile & settings'
+                                : 'Get started with FixItFirst',
                             style: GoogleFonts.outfit(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: AppTheme.textPrimary,
+                              color: textPrimaryColor,
                             ),
                           ),
                         ),
@@ -117,28 +141,30 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Log in to your existing account or create a new one to book services and track orders.',
+                      'Log in to your existing account or create a new one to manage saved addresses, track orders, and configure settings.',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
-                        color: AppTheme.textSecondary,
+                        color: textSecondaryColor,
                         height: 1.4,
                       ),
                     ),
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        // Log In Button
+                        // Log In Button (Dark Slate button with crisp white text)
                         Expanded(
                           child: SizedBox(
                             height: 48,
                             child: ElevatedButton.icon(
                               onPressed: () {
                                 Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                  MaterialPageRoute(
+                                    builder: (context) => const LoginScreen(),
+                                  ),
                                 );
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryDark,
+                                backgroundColor: const Color(0xFF0F172A),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -158,19 +184,21 @@ class ProfileScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 12),
 
-                        // Sign Up Button
+                        // Sign Up Button (Bright Yellow button with dark slate text)
                         Expanded(
                           child: SizedBox(
                             height: 48,
                             child: ElevatedButton.icon(
                               onPressed: () {
                                 Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                                  MaterialPageRoute(
+                                    builder: (context) => const RegisterScreen(),
+                                  ),
                                 );
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primary,
-                                foregroundColor: Colors.white,
+                                foregroundColor: const Color(0xFF0F172A),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -195,51 +223,60 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 24),
             ],
 
-            // Profile Actions List
-            _buildSectionHeader('Account Settings'),
-            const SizedBox(height: 10),
-            Consumer<AddressProvider>(
-              builder: (context, addressProvider, _) {
-                final def = addressProvider.defaultAddress;
-                final subtitleText = def != null
-                    ? '${def.tag}: ${def.fullAddress}'
-                    : 'Manage home & office service locations';
+            // Account Settings List (Shown ONLY for REAL authenticated accounts)
+            if (authProvider.isRealUser) ...[
+              _buildSectionHeader('Account Settings', textSecondaryColor),
+              const SizedBox(height: 10),
+              Consumer<AddressProvider>(
+                builder: (context, addressProvider, _) {
+                  final def = addressProvider.defaultAddress;
+                  final subtitleText = def != null
+                      ? '${def.tag}: ${def.fullAddress}'
+                      : 'Manage home & office service locations';
 
-                return _buildProfileTile(
-                  icon: Icons.location_on_outlined,
-                  title: 'Saved Addresses',
-                  subtitle: subtitleText,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const SavedAddressesScreen()),
-                    );
-                  },
-                );
-              },
-            ),
-            _buildProfileTile(
-              icon: Icons.payment_outlined,
-              title: 'Payment Methods',
-              subtitle: 'UPI, Credit/Debit cards, Cash on service',
-              onTap: () {},
-            ),
-            _buildProfileTile(
-              icon: Icons.notifications_outlined,
-              title: 'Notification Preferences',
-              subtitle: 'Order updates and promotional offers',
-              onTap: () {},
-            ),
-            const SizedBox(height: 24),
+                  return _buildProfileTile(
+                    context: context,
+                    icon: Icons.location_on_outlined,
+                    title: 'Saved Addresses',
+                    subtitle: subtitleText,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const SavedAddressesScreen(),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+              _buildProfileTile(
+                context: context,
+                icon: Icons.payment_outlined,
+                title: 'Payment Methods',
+                subtitle: 'UPI, Credit/Debit cards, Cash on service',
+                onTap: () {},
+              ),
+              _buildProfileTile(
+                context: context,
+                icon: Icons.notifications_outlined,
+                title: 'Notification Preferences',
+                subtitle: 'Order updates and promotional offers',
+                onTap: () {},
+              ),
+              const SizedBox(height: 24),
+            ],
 
-            _buildSectionHeader('Support & Legal'),
+            _buildSectionHeader('Support & Legal', textSecondaryColor),
             const SizedBox(height: 10),
             _buildProfileTile(
+              context: context,
               icon: Icons.headset_mic_outlined,
               title: 'Customer Support 24/7',
               subtitle: 'Chat or call our dedicated helpdesk',
               onTap: () {},
             ),
             _buildProfileTile(
+              context: context,
               icon: Icons.privacy_tip_outlined,
               title: 'Terms & Privacy Policy',
               subtitle: 'Read terms of service',
@@ -247,8 +284,8 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 28),
 
-            // Logout Button (Shown only when authenticated)
-            if (authProvider.isAuthenticated)
+            // Logout Button (Shown ONLY for REAL authenticated accounts)
+            if (authProvider.isRealUser)
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -273,7 +310,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, Color textColor) {
     return Align(
       alignment: Alignment.centerLeft,
       child: Text(
@@ -281,51 +318,66 @@ class ProfileScreen extends StatelessWidget {
         style: GoogleFonts.outfit(
           fontSize: 16,
           fontWeight: FontWeight.bold,
-          color: AppTheme.textSecondary,
+          color: textColor,
         ),
       ),
     );
   }
 
   Widget _buildProfileTile({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String subtitle,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBgColor = isDark ? AppTheme.darkSurface : Colors.white;
+    final cardBorderColor = isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
+    final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+    final textSecondaryColor = isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBgColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: cardBorderColor),
       ),
       child: ListTile(
         onTap: onTap,
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppTheme.primary.withValues(alpha: 0.08),
+            color: isDark
+                ? AppTheme.primary.withValues(alpha: 0.15)
+                : AppTheme.primaryDark.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: AppTheme.primary),
+          child: Icon(
+            icon,
+            color: isDark ? AppTheme.primary : AppTheme.primaryDark,
+          ),
         ),
         title: Text(
           title,
           style: GoogleFonts.outfit(
             fontWeight: FontWeight.bold,
             fontSize: 15,
-            color: AppTheme.textPrimary,
+            color: textPrimaryColor,
           ),
         ),
         subtitle: Text(
           subtitle,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 12,
-            color: AppTheme.textSecondary,
+            color: textSecondaryColor,
           ),
         ),
-        trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textSecondary),
+        trailing: Icon(
+          Icons.chevron_right_rounded,
+          color: textSecondaryColor,
+        ),
       ),
     );
   }

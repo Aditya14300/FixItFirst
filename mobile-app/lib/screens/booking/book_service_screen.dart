@@ -39,14 +39,6 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final addressProvider = Provider.of<AddressProvider>(context, listen: false);
-      final def = addressProvider.defaultAddress;
-      if (def != null && _addressController.text.isEmpty) {
-        setState(() {
-          _addressController.text = def.fullAddress;
-        });
-      }
-
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       if (!authProvider.isAuthenticated) {
         ScaffoldMessenger.of(context).showSnackBar(

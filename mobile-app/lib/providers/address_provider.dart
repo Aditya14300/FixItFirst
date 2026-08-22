@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/saved_address_model.dart';
 
 class AddressProvider extends ChangeNotifier {
-  static const String _storageKey = 'user_saved_addresses_v1';
+  static const String _storageKey = 'user_saved_addresses_v2';
   List<SavedAddressModel> _addresses = [];
   bool _isLoading = false;
 
@@ -32,24 +32,10 @@ class AddressProvider extends ChangeNotifier {
 
       if (storedJson != null && storedJson.isNotEmpty) {
         _addresses = SavedAddressModel.decodeList(storedJson);
+        // Filter out any legacy dummy addresses if present
+        _addresses.removeWhere((a) => a.id == 'addr_home' || a.id == 'addr_work');
       } else {
-        // Default initial addresses for new users
-        _addresses = [
-          SavedAddressModel(
-            id: 'addr_home',
-            tag: 'Home',
-            fullAddress: 'Flat 402, Sunshine Apartments, MG Road',
-            landmark: 'Near Central Mall',
-            isDefault: true,
-          ),
-          SavedAddressModel(
-            id: 'addr_work',
-            tag: 'Work',
-            fullAddress: 'Building 5, Tech Park, Cyber City',
-            landmark: '3rd Floor, Suite 301',
-            isDefault: false,
-          ),
-        ];
+        _addresses = [];
         await _saveToStorage();
       }
     } catch (e) {
