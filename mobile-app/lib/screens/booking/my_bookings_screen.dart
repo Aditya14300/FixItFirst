@@ -5,6 +5,8 @@ import '../../core/app_theme.dart';
 import '../../models/booking_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/booking_provider.dart';
+import '../auth/login_screen.dart';
+import '../auth/register_screen.dart';
 
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
@@ -19,7 +21,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      Provider.of<BookingProvider>(context, listen: false).fetchBookings(userPhone: auth.user?.phone);
+      if (auth.isRealUser) {
+        Provider.of<BookingProvider>(context, listen: false).fetchBookings(userPhone: auth.user?.phone);
+      }
     });
   }
 
@@ -27,6 +31,16 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   Widget build(BuildContext context) {
     final bookingProvider = Provider.of<BookingProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
+
+    // If user is in Demo Mode or Guest (not logged in with a real account), show ONLY Log In & Sign Up options!
+    if (!authProvider.isRealUser) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('My Bookings'),
+        ),
+        body: _buildDemoGuestAuthNotice(context),
+      );
+    }
 
     return DefaultTabController(
       length: 2,
@@ -63,6 +77,120 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
               _buildBookingsList(context, bookingProvider.completedBookings, isHistory: true),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDemoGuestAuthNotice(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+    final textSecondaryColor = isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary;
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.calendar_month_rounded,
+                size: 64,
+                color: AppTheme.primaryDark,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Sign In to View Bookings',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.outfit(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: textPrimaryColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Log in to your account or create a new one to view your active bookings and order history.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                color: textSecondaryColor,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 28),
+            Row(
+              children: [
+                // Log In Button
+                Expanded(
+                  child: SizedBox(
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => const LoginScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0F172A),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.login_rounded, size: 18),
+                      label: Text(
+                        'Log In',
+                        style: GoogleFonts.outfit(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Sign Up Button
+                Expanded(
+                  child: SizedBox(
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: const Color(0xFF0F172A),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.person_add_rounded, size: 18),
+                      label: Text(
+                        'Sign Up',
+                        style: GoogleFonts.outfit(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -246,7 +374,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   ),
                 ],
               ),
-              if (booking.status == 'confirmed' || booking.status == 'pending')
+              if (booking.status.toLowerCase() == 'confirmed' || booking.status.toLowerCase() == 'pending')
                 OutlinedButton.icon(
                   onPressed: () {
                     Provider.of<BookingProvider>(context, listen: false)
