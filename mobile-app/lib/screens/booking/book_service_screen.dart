@@ -65,14 +65,15 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
         return;
       }
 
-      // Auto pre-fill address from user.address or saved address if available
-      final existingAddress = authProvider.user?.address.trim().isNotEmpty == true
-          ? authProvider.user!.address.trim()
-          : (addressProvider.defaultAddress?.fullAddress ?? '');
+      // Check if user already has an address saved in database users collection
+      final dbUserAddress = authProvider.user?.address.trim() ?? '';
+      final savedAddress = addressProvider.defaultAddress?.fullAddress ?? '';
 
-      if (existingAddress.isNotEmpty && _addressController.text.isEmpty) {
+      final initialAddress = dbUserAddress.isNotEmpty ? dbUserAddress : savedAddress;
+
+      if (initialAddress.isNotEmpty && _addressController.text.isEmpty) {
         setState(() {
-          _addressController.text = existingAddress;
+          _addressController.text = initialAddress;
         });
       }
     });
@@ -122,7 +123,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
 
       if (mounted) {
         if (success) {
-          // Sync & update address column in User profile & SharedPreferences
+          // Update address column in users collection in MongoDB and local session
           await authProvider.updateUserAddress(enteredAddress);
           _showSuccessDialog();
         } else {
@@ -228,11 +229,11 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
         } else if (index == 1) {
           dayLabel = 'Tomorrow';
         } else {
-          dayLabel = DateFormat('EEE').format(date); // e.g. Mon, Tue
+          dayLabel = DateFormat('EEE').format(date);
         }
 
-        final dayNum = DateFormat('dd').format(date); // e.g. 23
-        final monthStr = DateFormat('MMM').format(date); // e.g. Aug
+        final dayNum = DateFormat('dd').format(date);
+        final monthStr = DateFormat('MMM').format(date);
 
         return GestureDetector(
           onTap: () {
@@ -423,13 +424,16 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
   @override
   Widget build(BuildContext context) {
     final bookingProvider = Provider.of<BookingProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+    final textSecondaryColor = isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary;
     final cardBgColor = isDark ? AppTheme.darkSurface : Colors.white;
     final cardBorderColor = isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
 
-    final hasExistingAddress = _addressController.text.trim().isNotEmpty;
+    final hasUserAddressInDb = authProvider.user?.address.trim().isNotEmpty == true;
+    final hasCurrentAddressText = _addressController.text.trim().isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
@@ -540,8 +544,8 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
               const SizedBox(height: 24),
 
               // Service Address Section
-              if (hasExistingAddress && !_isChangingAddress) ...[
-                // Highlighted Saved Address Card with "Change Address" Option
+              if (hasCurrentAddressText && !_isChangingAddress) ...[
+                // Highlighted Saved Address Card (User can go with previous address or change it)
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -586,6 +590,22 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          hasUserAddressInDb ? 'Saved Address (From Database)' : 'Current Address',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryDark,
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         _addressController.text,
@@ -600,7 +620,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                   ),
                 ),
               ] else ...[
-                // Address Input & Quick Selector
+                // Address Input Field (If user doesn't have address or clicked Change Address)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -612,16 +632,24 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                         color: textPrimaryColor,
                       ),
                     ),
-                    if (hasExistingAddress)
+                    if (hasCurrentAddressText)
                       TextButton(
                         onPressed: () {
                           setState(() {
                             _isChangingAddress = false;
                           });
                         },
-                        child: const Text('Done'),
+                        child: const Text('Use Saved Address'),
                       ),
                   ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Address will be saved to your profile in database upon booking.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: textSecondaryColor,
+                  ),
                 ),
                 const SizedBox(height: 8),
 
