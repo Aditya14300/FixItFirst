@@ -251,13 +251,6 @@ class ProfileScreen extends StatelessWidget {
               ),
               _buildProfileTile(
                 context: context,
-                icon: Icons.payment_outlined,
-                title: 'Payment Methods',
-                subtitle: 'UPI, Credit/Debit cards, Cash on service',
-                onTap: () {},
-              ),
-              _buildProfileTile(
-                context: context,
                 icon: Icons.notifications_outlined,
                 title: 'Notification Preferences',
                 subtitle: 'Order updates and promotional offers',

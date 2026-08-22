@@ -21,15 +21,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
   bool _obscurePassword = true;
+  bool _isFormValid = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController.addListener(_checkFormValidation);
+    _phoneController.addListener(_checkFormValidation);
+    _emailController.addListener(_checkFormValidation);
+    _passwordController.addListener(_checkFormValidation);
+  }
 
   @override
   void dispose() {
+    _nameController.removeListener(_checkFormValidation);
+    _phoneController.removeListener(_checkFormValidation);
+    _emailController.removeListener(_checkFormValidation);
+    _passwordController.removeListener(_checkFormValidation);
+
     _nameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _checkFormValidation() {
+    final nameVal = _nameController.text.trim();
+    final phoneVal = _phoneController.text.trim();
+    final emailVal = _emailController.text.trim();
+    final passwordVal = _passwordController.text;
+
+    final isNameValid = nameVal.isNotEmpty;
+    final isPhoneValid = RegExp(r'^\d{10}$').hasMatch(phoneVal);
+    final isEmailValid = emailVal.isNotEmpty && RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(emailVal);
+    final isPasswordValid = passwordVal.length >= 6;
+
+    final isValid = isNameValid && isPhoneValid && isEmailValid && isPasswordValid;
+
+    if (isValid != _isFormValid) {
+      setState(() {
+        _isFormValid = isValid;
+      });
+    }
   }
 
   void _handleRegister() async {
@@ -102,7 +138,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 // Name Input
                 Text(
-                  'Full Name',
+                  'Full Name *',
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -127,9 +163,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ).animate().fadeIn(delay: 200.ms),
                 const SizedBox(height: 18),
 
-                // Phone Input
+                // Phone Input (Strict 10 Digits)
                 Text(
-                  'Phone Number',
+                  'Mobile Number (10 Digits) *',
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -139,16 +175,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  maxLength: 15,
-                  inputFormatters: [LengthLimitingTextInputFormatter(15)],
+                  maxLength: 10,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
                   decoration: const InputDecoration(
-                    hintText: 'Enter phone number',
+                    hintText: 'Enter 10-digit mobile number',
                     counterText: '',
                     prefixIcon: Icon(Icons.phone_android_rounded),
                   ),
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter phone number';
+                    if (value == null || value.trim().length != 10) {
+                      return 'Mobile number must be exactly 10 digits';
                     }
                     return null;
                   },
@@ -157,7 +196,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 // Email Input
                 Text(
-                  'Email Address (Optional)',
+                  'Email Address *',
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -174,12 +213,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     counterText: '',
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter email address';
+                    }
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                      return 'Please enter a valid email address';
+                    }
+                    return null;
+                  },
                 ).animate().fadeIn(delay: 400.ms),
                 const SizedBox(height: 18),
 
                 // Password Input
                 Text(
-                  'Password',
+                  'Password *',
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -192,7 +240,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   maxLength: 50,
                   inputFormatters: [LengthLimitingTextInputFormatter(50)],
                   decoration: InputDecoration(
-                    hintText: 'Create strong password',
+                    hintText: 'Create password (min 6 characters)',
                     counterText: '',
                     prefixIcon: const Icon(Icons.lock_outline_rounded),
                     suffixIcon: IconButton(
@@ -215,12 +263,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ).animate().fadeIn(delay: 500.ms),
                 const SizedBox(height: 32),
 
-                // Submit Button
+                // Create Account Button (Disabled until ALL mandatory fields are correctly filled)
                 SizedBox(
                   width: double.infinity,
                   height: 54,
                   child: ElevatedButton(
-                    onPressed: authProvider.isLoading ? null : _handleRegister,
+                    onPressed: (_isFormValid && !authProvider.isLoading) ? _handleRegister : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: const Color(0xFF0F172A),
+                      disabledBackgroundColor: isDark ? AppTheme.darkBorder : Colors.grey.shade300,
+                      disabledForegroundColor: isDark ? AppTheme.textDarkSecondary : Colors.grey.shade600,
+                    ),
                     child: authProvider.isLoading
                         ? const SizedBox(
                             width: 24,
