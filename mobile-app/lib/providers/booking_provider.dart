@@ -19,10 +19,10 @@ class BookingProvider extends ChangeNotifier {
   String? get error => _error;
 
   List<BookingModel> get activeBookings =>
-      _bookings.where((b) => b.status == 'pending' || b.status == 'confirmed').toList();
+      _bookings.where((b) => b.status.toLowerCase() == 'pending' || b.status.toLowerCase() == 'confirmed').toList();
 
   List<BookingModel> get completedBookings =>
-      _bookings.where((b) => b.status == 'completed' || b.status == 'cancelled').toList();
+      _bookings.where((b) => b.status.toLowerCase() == 'completed' || b.status.toLowerCase() == 'cancelled').toList();
 
   BookingProvider() {
     fetchBookings();
@@ -36,7 +36,7 @@ class BookingProvider extends ChangeNotifier {
     });
   }
 
-  // Real-Time MongoDB Bookings Fetch (Supports silent background updates & user filtering)
+  // Real-Time MongoDB Bookings Fetch (Strictly live data from MongoDB)
   Future<void> fetchBookings({String? userPhone, bool isSilent = false}) async {
     if (userPhone != null && userPhone.isNotEmpty) {
       _activeUserPhone = userPhone;
@@ -59,6 +59,8 @@ class BookingProvider extends ChangeNotifier {
         _bookings.clear();
         _bookings.addAll(dynamicList.map((j) => BookingModel.fromJson(j)));
         _error = null;
+      } else {
+        _bookings.clear();
       }
     } on ApiException catch (e) {
       if (!isSilent) _error = e.message;
@@ -73,7 +75,7 @@ class BookingProvider extends ChangeNotifier {
     }
   }
 
-  // Real-Time MongoDB Booking Creation
+  // Real-Time MongoDB Booking Creation (Strictly live backend API)
   Future<bool> createBooking({
     required ServiceModel service,
     required UserModel? user,
@@ -86,7 +88,14 @@ class BookingProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    final phone = user?.phone ?? _activeUserPhone ?? '9876543210';
+    final phone = user?.phone ?? _activeUserPhone;
+    if (phone == null || phone.isEmpty) {
+      _error = 'Please log in to book a service.';
+      _isSubmitting = false;
+      notifyListeners();
+      return false;
+    }
+
     _activeUserPhone = phone;
 
     final payload = {
@@ -106,24 +115,16 @@ class BookingProvider extends ChangeNotifier {
         final bookingMap = res['booking'] ?? res;
         final newBooking = BookingModel.fromJson(bookingMap);
         _bookings.insert(0, newBooking);
+        _isSubmitting = false;
+        notifyListeners();
+        fetchBookings(userPhone: phone, isSilent: true);
+        return true;
       } else {
-        final fallbackBooking = BookingModel(
-          id: 'BK-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
-          service: service,
-          user: user,
-          date: date,
-          timeSlot: timeSlot,
-          address: address,
-          status: 'pending',
-          totalAmount: service.finalPrice,
-          notes: notes,
-        );
-        _bookings.insert(0, fallbackBooking);
+        _error = res?['message'] ?? 'Failed to create booking on backend.';
+        _isSubmitting = false;
+        notifyListeners();
+        return false;
       }
-      _isSubmitting = false;
-      notifyListeners();
-      fetchBookings(userPhone: phone, isSilent: true);
-      return true;
     } on ApiException catch (e) {
       _error = e.message;
       _isSubmitting = false;
@@ -137,30 +138,21 @@ class BookingProvider extends ChangeNotifier {
     }
   }
 
-  // Real-Time Order Cancellation
+  // Real-Time Order Cancellation (Strictly live backend API)
   Future<void> cancelBooking(String bookingId) async {
-    final index = _bookings.indexWhere((b) => b.id == bookingId);
-    if (index != -1) {
-      final current = _bookings[index];
-      _bookings[index] = BookingModel(
-        id: current.id,
-        service: current.service,
-        user: current.user,
-        date: current.date,
-        timeSlot: current.timeSlot,
-        address: current.address,
-        status: 'cancelled',
-        totalAmount: current.totalAmount,
-        notes: current.notes,
-        createdAt: current.createdAt,
-      );
-      notifyListeners();
-
-      try {
-        await ApiService.put('/bookings/$bookingId/cancel', {}, requireAuth: true);
-      } catch (e) {
-        debugPrint('Cancellation API sync failed: $e');
+    try {
+      final res = await ApiService.put('/bookings/$bookingId/cancel', {}, requireAuth: true);
+      if (res != null && res['booking'] != null) {
+        final updated = BookingModel.fromJson(res['booking']);
+        final index = _bookings.indexWhere((b) => b.id == bookingId);
+        if (index != -1) {
+          _bookings[index] = updated;
+          notifyListeners();
+        }
       }
+      fetchBookings(userPhone: _activeUserPhone, isSilent: true);
+    } catch (e) {
+      debugPrint('Cancellation API sync failed: $e');
     }
   }
 
