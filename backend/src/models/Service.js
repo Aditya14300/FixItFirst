@@ -8,6 +8,7 @@ const serviceSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // Reference to parent Main Category
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
@@ -17,8 +18,10 @@ const serviceSchema = new mongoose.Schema(
     description: {
       type: String,
       required: true,
+      default: "",
     },
 
+    // Price @ Start From
     price: {
       type: Number,
       required: true,
@@ -31,9 +34,10 @@ const serviceSchema = new mongoose.Schema(
 
     duration: {
       type: Number,
-      required: true,
+      default: 45,
     },
 
+    // Service picture
     image: {
       type: String,
       default: "",
@@ -42,7 +46,7 @@ const serviceSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
-    }
+    },
   },
   {
     timestamps: true,

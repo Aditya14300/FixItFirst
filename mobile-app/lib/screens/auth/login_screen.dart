@@ -193,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  maxLength: 15,
+                  maxLength: 10,
                   inputFormatters: [LengthLimitingTextInputFormatter(15)],
                   decoration: const InputDecoration(
                     hintText: 'Enter phone number',
@@ -288,32 +288,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ).animate().fadeIn(delay: 400.ms).scale(),
 
                 const SizedBox(height: 16),
-
-                // Quick Demo Sign In Button (Ensures user is NEVER blocked!)
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: OutlinedButton.icon(
-                    onPressed: authProvider.isLoading ? null : _handleDemoLogin,
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppTheme.primaryDark.withValues(alpha: 0.5)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    icon: const Icon(Icons.flash_on_rounded, color: AppTheme.primaryDark),
-                    label: Text(
-                      'Instant Demo Sign In',
-                      style: GoogleFonts.outfit(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryDark,
-                      ),
-                    ),
-                  ),
-                ).animate().fadeIn(delay: 450.ms),
-
-                const SizedBox(height: 28),
 
                 // Register Prompt
                 Row(

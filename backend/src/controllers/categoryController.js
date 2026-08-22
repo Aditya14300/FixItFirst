@@ -1,9 +1,9 @@
 const Category = require("../models/Category");
 
-// Add Category
+// Add Main Category
 const addCategory = async (req, res) => {
   try {
-    const { name, description, icon } = req.body;
+    const { name, description, icon, image, bookingCount } = req.body;
 
     if (!name) {
       return res.status(400).json({
@@ -23,8 +23,10 @@ const addCategory = async (req, res) => {
 
     const category = await Category.create({
       name,
-      description,
-      icon,
+      description: description || "",
+      icon: icon || "",
+      image: image || "",
+      bookingCount: Number(bookingCount) || 0,
     });
 
     res.status(201).json({
@@ -40,10 +42,10 @@ const addCategory = async (req, res) => {
   }
 };
 
-// Get All Categories
+// Get All Main Categories (sorted by bookingCount descending)
 const getCategories = async (req, res) => {
   try {
-    const categories = await Category.find();
+    const categories = await Category.find({ isActive: true }).sort({ bookingCount: -1, createdAt: 1 });
 
     res.status(200).json({
       success: true,

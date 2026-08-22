@@ -1,4 +1,6 @@
 const Booking = require("../models/Booking");
+const Service = require("../models/Service");
+const Category = require("../models/Category");
 
 // Get bookings (filtered by customerPhone query if provided, or all for admin)
 const getBookings = async (req, res) => {
@@ -25,7 +27,7 @@ const getBookings = async (req, res) => {
   }
 };
 
-// Create a booking
+// Create a booking & increment Category bookingCount
 const createBooking = async (req, res) => {
   try {
     const { customerName, customerPhone, serviceName, date, timeSlot, address, amount, notes } = req.body;
@@ -54,6 +56,16 @@ const createBooking = async (req, res) => {
       amount: cleanAmount,
       notes: cleanNotes,
     });
+
+    // Auto-increment bookingCount on parent Category
+    try {
+      const matchedService = await Service.findOne({ name: { $regex: cleanServiceName, $options: 'i' } });
+      if (matchedService && matchedService.category) {
+        await Category.findByIdAndUpdate(matchedService.category, { $inc: { bookingCount: 1 } });
+      }
+    } catch (e) {
+      console.log('Increment booking count error:', e);
+    }
 
     res.status(201).json({
       success: true,

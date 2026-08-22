@@ -165,7 +165,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 // Phone Input (Strict 10 Digits)
                 Text(
-                  'Mobile Number (10 Digits) *',
+                  'Mobile Number *',
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
