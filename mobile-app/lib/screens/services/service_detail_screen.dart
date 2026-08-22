@@ -14,6 +14,13 @@ class ServiceDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+    final textSecondaryColor = isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary;
+    final cardBgColor = isDark ? AppTheme.darkSurface : Colors.white;
+    final cardBorderColor = isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -28,12 +35,12 @@ class ServiceDetailScreen extends StatelessWidget {
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Container(
                         color: AppTheme.primary,
-                        child: const Icon(Icons.build_rounded, size: 72, color: Colors.white),
+                        child: const Icon(Icons.build_rounded, size: 72, color: Color(0xFF0F172A)),
                       ),
                     )
                   : Container(
                       color: AppTheme.primary,
-                      child: const Icon(Icons.build_rounded, size: 72, color: Colors.white),
+                      child: const Icon(Icons.build_rounded, size: 72, color: Color(0xFF0F172A)),
                     ),
             ),
           ),
@@ -49,7 +56,7 @@ class ServiceDetailScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryLight.withValues(alpha: 0.1),
+                        color: AppTheme.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -57,7 +64,7 @@ class ServiceDetailScreen extends StatelessWidget {
                         style: GoogleFonts.outfit(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryLight,
+                          color: AppTheme.primaryDark,
                         ),
                       ),
                     ),
@@ -68,7 +75,7 @@ class ServiceDetailScreen extends StatelessWidget {
                     style: GoogleFonts.outfit(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
+                      color: textPrimaryColor,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -77,11 +84,13 @@ class ServiceDetailScreen extends StatelessWidget {
                   Row(
                     children: [
                       _buildHighlightBadge(
+                        context: context,
                         icon: Icons.timer_outlined,
                         label: '${service.duration} Mins Service',
                       ),
                       const SizedBox(width: 12),
                       _buildHighlightBadge(
+                        context: context,
                         icon: Icons.star_rounded,
                         label: '4.8 (120+ Reviews)',
                         iconColor: AppTheme.accent,
@@ -95,7 +104,7 @@ class ServiceDetailScreen extends StatelessWidget {
                     style: GoogleFonts.outfit(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
+                      color: textPrimaryColor,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -103,7 +112,7 @@ class ServiceDetailScreen extends StatelessWidget {
                     service.description,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 15,
-                      color: AppTheme.textSecondary,
+                      color: textSecondaryColor,
                       height: 1.5,
                     ),
                   ),
@@ -114,14 +123,14 @@ class ServiceDetailScreen extends StatelessWidget {
                     style: GoogleFonts.outfit(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
+                      color: textPrimaryColor,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildInclusionItem('Verified and background checked expert technician'),
-                  _buildInclusionItem('Complete inspection and diagnosis included'),
-                  _buildInclusionItem('30-day post-service service guarantee'),
-                  _buildInclusionItem('Transparent pricing with no hidden charges'),
+                  _buildInclusionItem(context, 'Verified and background checked expert technician'),
+                  _buildInclusionItem(context, 'Complete inspection and diagnosis included'),
+                  _buildInclusionItem(context, '30-day post-service service guarantee'),
+                  _buildInclusionItem(context, 'Transparent pricing with no hidden charges'),
                   const SizedBox(height: 32),
                 ],
               ),
@@ -134,10 +143,11 @@ class ServiceDetailScreen extends StatelessWidget {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardBgColor,
+          border: Border(top: BorderSide(color: cardBorderColor)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
               blurRadius: 16,
               offset: const Offset(0, -4),
             ),
@@ -154,7 +164,7 @@ class ServiceDetailScreen extends StatelessWidget {
                     'Total Price',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
-                      color: AppTheme.textSecondary,
+                      color: textSecondaryColor,
                     ),
                   ),
                   Row(
@@ -164,7 +174,7 @@ class ServiceDetailScreen extends StatelessWidget {
                         style: GoogleFonts.outfit(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primary,
+                          color: AppTheme.primaryDark,
                         ),
                       ),
                       if (service.hasDiscount) ...[
@@ -173,7 +183,7 @@ class ServiceDetailScreen extends StatelessWidget {
                           '₹${service.price.toInt()}',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
-                            color: AppTheme.textSecondary,
+                            color: textSecondaryColor,
                             decoration: TextDecoration.lineThrough,
                           ),
                         ),
@@ -221,16 +231,22 @@ class ServiceDetailScreen extends StatelessWidget {
   }
 
   Widget _buildHighlightBadge({
+    required BuildContext context,
     required IconData icon,
     required String label,
-    Color iconColor = AppTheme.primary,
+    Color iconColor = AppTheme.primaryDark,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+    final cardBgColor = isDark ? AppTheme.darkSurface : const Color(0xFFF1F5F9);
+    final cardBorderColor = isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.backgroundLight,
+        color: cardBgColor,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: cardBorderColor),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -245,7 +261,7 @@ class ServiceDetailScreen extends StatelessWidget {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: textPrimaryColor,
               ),
             ),
           ),
@@ -254,7 +270,10 @@ class ServiceDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInclusionItem(String title) {
+  Widget _buildInclusionItem(BuildContext context, String title) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -266,7 +285,7 @@ class ServiceDetailScreen extends StatelessWidget {
               title,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
-                color: AppTheme.textPrimary,
+                color: textPrimaryColor,
               ),
             ),
           ),

@@ -13,6 +13,12 @@ class ServicesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final serviceProvider = Provider.of<ServiceProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+    final textSecondaryColor = isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary;
+    final headerBgColor = isDark ? AppTheme.darkBackground : AppTheme.lightBackground;
+    final cardBorderColor = isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
 
     return Scaffold(
       appBar: AppBar(
@@ -27,24 +33,37 @@ class ServicesScreen extends StatelessWidget {
               onRetry: () => serviceProvider.loadInitialData(),
             ),
 
-          // Search & Filter Header
+          // Search Header Container
           Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            color: headerBgColor,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: TextField(
               onChanged: (value) => serviceProvider.setSearchQuery(value),
-              decoration: const InputDecoration(
+              style: GoogleFonts.plusJakartaSans(color: textPrimaryColor),
+              decoration: InputDecoration(
                 hintText: 'Search service name or description...',
-                prefixIcon: Icon(Icons.search_rounded, color: AppTheme.primary),
+                hintStyle: GoogleFonts.plusJakartaSans(color: textSecondaryColor),
+                prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.primaryDark),
+                fillColor: isDark ? AppTheme.darkSurface : Colors.white,
+                filled: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: cardBorderColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppTheme.primaryDark, width: 1.5),
+                ),
               ),
             ),
           ),
 
           // Categories Horizontal Filter Pills
           Container(
-            color: Colors.white,
-            height: 48,
-            padding: const EdgeInsets.only(bottom: 10),
+            color: headerBgColor,
+            height: 46,
+            padding: const EdgeInsets.only(bottom: 8),
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -53,6 +72,7 @@ class ServicesScreen extends StatelessWidget {
                 if (index == 0) {
                   final isSelected = serviceProvider.selectedCategoryId == 'all';
                   return _buildFilterPill(
+                    context: context,
                     label: 'All Services',
                     isSelected: isSelected,
                     onTap: () => serviceProvider.filterByCategory('all'),
@@ -62,6 +82,7 @@ class ServicesScreen extends StatelessWidget {
                 final category = serviceProvider.categories[index - 1];
                 final isSelected = serviceProvider.selectedCategoryId == category.id;
                 return _buildFilterPill(
+                  context: context,
                   label: category.name,
                   isSelected: isSelected,
                   onTap: () => serviceProvider.filterByCategory(category.id),
@@ -69,9 +90,9 @@ class ServicesScreen extends StatelessWidget {
               },
             ),
           ),
-          const Divider(height: 1, color: AppTheme.border),
+          Divider(height: 1, color: cardBorderColor),
 
-          // Services Grid / List
+          // Services Grid View
           Expanded(
             child: serviceProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -80,14 +101,14 @@ class ServicesScreen extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.search_off_rounded, size: 64, color: AppTheme.textSecondary),
+                            Icon(Icons.search_off_rounded, size: 64, color: textSecondaryColor.withValues(alpha: 0.6)),
                             const SizedBox(height: 12),
                             Text(
                               'No matching services found',
                               style: GoogleFonts.outfit(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
-                                color: AppTheme.textPrimary,
+                                color: textPrimaryColor,
                               ),
                             ),
                           ],
@@ -97,7 +118,7 @@ class ServicesScreen extends StatelessWidget {
                         padding: const EdgeInsets.all(16),
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          childAspectRatio: 0.65,
+                          childAspectRatio: 0.72,
                           crossAxisSpacing: 14,
                           mainAxisSpacing: 14,
                         ),
@@ -114,28 +135,43 @@ class ServicesScreen extends StatelessWidget {
   }
 
   Widget _buildFilterPill({
+    required BuildContext context,
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+    final cardBorderColor = isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
+
+    final pillBg = isSelected
+        ? AppTheme.primary
+        : (isDark ? AppTheme.darkSurface : const Color(0xFFF1F5F9));
+    final pillText = isSelected
+        ? const Color(0xFF0F172A)
+        : textPrimaryColor;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primary : AppTheme.backgroundLight,
+          color: pillBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppTheme.primary : AppTheme.border,
+            color: isSelected ? AppTheme.primary : cardBorderColor,
+            width: isSelected ? 1.5 : 1.0,
           ),
         ),
-        child: Text(
-          label,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? Colors.white : AppTheme.textPrimary,
+        child: Center(
+          child: Text(
+            label,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: pillText,
+            ),
           ),
         ),
       ),
@@ -143,6 +179,13 @@ class ServicesScreen extends StatelessWidget {
   }
 
   Widget _buildGridCard(BuildContext context, ServiceModel service) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+    final textSecondaryColor = isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary;
+
+    final cardBgColor = isDark ? AppTheme.darkSurface : Colors.white;
+    final cardBorderColor = isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
+
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
@@ -153,12 +196,12 @@ class ServicesScreen extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardBgColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.border),
+          border: Border.all(color: cardBorderColor),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
               blurRadius: 8,
               offset: const Offset(0, 4),
             )
@@ -167,12 +210,12 @@ class ServicesScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image Box
+            // Service Image Container
             Expanded(
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.05),
+                  color: AppTheme.primary.withValues(alpha: 0.1),
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                 ),
                 child: ClipRRect(
@@ -181,15 +224,26 @@ class ServicesScreen extends StatelessWidget {
                       ? Image.network(
                           service.image,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.build_rounded, size: 40, color: AppTheme.primary),
+                          errorBuilder: (context, error, stackTrace) => Center(
+                            child: Icon(
+                              Icons.build_rounded,
+                              size: 38,
+                              color: isDark ? AppTheme.primaryLight : AppTheme.primaryDark,
+                            ),
+                          ),
                         )
-                      : const Icon(Icons.build_rounded, size: 40, color: AppTheme.primary),
+                      : Center(
+                          child: Icon(
+                            Icons.build_rounded,
+                            size: 38,
+                            color: isDark ? AppTheme.primaryLight : AppTheme.primaryDark,
+                          ),
+                        ),
                 ),
               ),
             ),
 
-            // Content
+            // Card Text Details
             Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
@@ -200,9 +254,10 @@ class ServicesScreen extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.outfit(
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
+                      color: textPrimaryColor,
+                      height: 1.25,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -210,28 +265,48 @@ class ServicesScreen extends StatelessWidget {
                     '${service.duration} mins service',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
-                      color: AppTheme.textSecondary,
+                      fontWeight: FontWeight.w500,
+                      color: textSecondaryColor,
                     ),
                   ),
                   const SizedBox(height: 8),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        '₹${service.finalPrice.toInt()}',
-                        style: GoogleFonts.outfit(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primary,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Starting from',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                color: textSecondaryColor,
+                              ),
+                            ),
+                            Text(
+                              '₹${service.finalPrice.toInt()}',
+                              style: GoogleFonts.outfit(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryDark,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.all(6),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: AppTheme.primary,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.add, color: Colors.white, size: 16),
+                        child: const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Color(0xFF0F172A),
+                          size: 14,
+                        ),
                       ),
                     ],
                   ),
