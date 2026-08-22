@@ -16,7 +16,8 @@ const register = async (req, res) => {
       });
     }
 
-    const cleanPhone = phone.trim();
+    const cleanPhone = phone.trim().replace(/[\s\-\+\(\)]/g, "");
+    const last10Digits = cleanPhone.length >= 10 ? cleanPhone.slice(-10) : cleanPhone;
     const cleanEmail = (email && email.trim().length > 0) ? email.trim().toLowerCase() : null;
     const targetRole = role || "customer";
     const isStaffRole = ["technician", "staff", "admin"].includes(targetRole);
@@ -24,7 +25,13 @@ const register = async (req, res) => {
     const Model = isStaffRole ? Staff : User;
 
     // Check if user already exists
-    const queryConditions = [{ phone: cleanPhone }];
+    const queryConditions = [
+      { phone: phone.trim() },
+      { phone: cleanPhone },
+      { phone: last10Digits },
+      { phone: { $regex: last10Digits + "$" } }
+    ];
+
     if (cleanEmail) {
       queryConditions.push({ email: cleanEmail });
     }
@@ -46,7 +53,7 @@ const register = async (req, res) => {
     // Create user/staff object
     const accountData = {
       name: name.trim(),
-      phone: cleanPhone,
+      phone: last10Digits,
       password: hashedPassword,
       role: targetRole,
     };
@@ -91,12 +98,21 @@ const login = async (req, res) => {
       });
     }
 
-    const cleanPhone = phone.trim();
+    const input = phone.trim();
+    const cleanPhone = input.replace(/[\s\-\+\(\)]/g, "");
+    const last10Digits = cleanPhone.length >= 10 ? cleanPhone.slice(-10) : cleanPhone;
+
+    const searchConditions = [
+      { phone: input },
+      { phone: cleanPhone },
+      { phone: last10Digits },
+      { phone: { $regex: last10Digits + "$" } }
+    ];
 
     // Check Users collection first, then Staff collection
-    let account = await User.findOne({ phone: cleanPhone });
+    let account = await User.findOne({ $or: searchConditions });
     if (!account) {
-      account = await Staff.findOne({ phone: cleanPhone });
+      account = await Staff.findOne({ $or: searchConditions });
     }
 
     if (!account) {
@@ -125,12 +141,13 @@ const login = async (req, res) => {
         id: account._id,
         name: account.name,
         phone: account.phone,
-        email: account.email,
+        email: account.email || "",
+        address: account.address || "",
         role: account.role,
       },
     });
   } catch (error) {
-    console.log(error);
+    console.log("Login Error:", error);
 
     res.status(500).json({
       success: false,
@@ -165,6 +182,8 @@ const resetPassword = async (req, res) => {
     }
 
     const input = phone.trim();
+    const cleanPhone = input.replace(/[\s\-\+\(\)]/g, "");
+    const last10Digits = cleanPhone.length >= 10 ? cleanPhone.slice(-10) : cleanPhone;
 
     if (newPassword.length < 6) {
       return res.status(400).json({
@@ -173,11 +192,11 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    // Normalize phone number (remove spaces and hyphens)
-    const cleanPhone = input.replace(/[\s\-]/g, "");
     const searchConditions = [
-      { phone: cleanPhone },
       { phone: input },
+      { phone: cleanPhone },
+      { phone: last10Digits },
+      { phone: { $regex: last10Digits + "$" } },
       { email: input.toLowerCase() },
     ];
 
