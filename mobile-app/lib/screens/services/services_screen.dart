@@ -17,7 +17,7 @@ class ServicesScreen extends StatelessWidget {
 
     final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
     final textSecondaryColor = isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary;
-    final headerBgColor = isDark ? AppTheme.darkBackground : AppTheme.lightBackground;
+    final headerBgColor = isDark ? AppTheme.darkBg : AppTheme.lightBg;
     final cardBorderColor = isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
 
     return Scaffold(
