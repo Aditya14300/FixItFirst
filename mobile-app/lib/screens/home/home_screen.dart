@@ -7,37 +7,71 @@ import '../../models/service_model.dart';
 import '../../providers/service_provider.dart';
 import '../../widgets/database_error_widget.dart';
 import '../services/service_detail_screen.dart';
+import '../services/services_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   IconData _getCategoryIcon(String iconName) {
     switch (iconName.toLowerCase()) {
-      case 'plumbing':
-        return Icons.plumbing_rounded;
-      case 'electrical':
-        return Icons.electric_bolt_rounded;
+      case 'air conditioner service':
       case 'ac_unit':
       case 'ac repair':
         return Icons.ac_unit_rounded;
+      case 'home electrical':
+      case 'electrical':
+        return Icons.electrical_services_rounded;
+      case 'chimney service':
+        return Icons.soup_kitchen_rounded;
+      case 'washing machine service':
+        return Icons.local_laundry_service_rounded;
+      case 'refrigerator service':
       case 'kitchen':
-      case 'appliance':
         return Icons.kitchen_rounded;
-      case 'carpenter':
-      case 'carpentry':
-        return Icons.handyman_rounded;
-      case 'cleaning':
-      case 'cleaning_services':
-        return Icons.cleaning_services_rounded;
+      case 'cctv service':
+        return Icons.videocam_rounded;
       default:
-        return Icons.build_rounded;
+        return Icons.home_repair_service_rounded;
     }
+  }
+
+  // Interleaves sub-services across all main categories so every category is represented in Popular Services!
+  List<ServiceModel> _getPopularServicesAcrossCategories(List<ServiceModel> allServices) {
+    if (allServices.isEmpty) return [];
+
+    final Map<String, List<ServiceModel>> categoryMap = {};
+    for (final service in allServices) {
+      final catName = service.category?.name ?? 'Other Services';
+      if (!categoryMap.containsKey(catName)) {
+        categoryMap[catName] = [];
+      }
+      categoryMap[catName]!.add(service);
+    }
+
+    final List<ServiceModel> popularList = [];
+    int maxIndex = 0;
+    for (final list in categoryMap.values) {
+      if (list.length > maxIndex) maxIndex = list.length;
+    }
+
+    for (int i = 0; i < maxIndex; i++) {
+      for (final catName in categoryMap.keys) {
+        final list = categoryMap[catName]!;
+        if (i < list.length) {
+          popularList.add(list[i]);
+        }
+      }
+    }
+
+    return popularList;
   }
 
   @override
   Widget build(BuildContext context) {
     final serviceProvider = Provider.of<ServiceProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final popularServices = _getPopularServicesAcrossCategories(serviceProvider.services);
 
     return Scaffold(
       body: SafeArea(
@@ -56,6 +90,7 @@ class HomeScreen extends StatelessWidget {
                   DatabaseErrorWidget(
                     onRetry: () => serviceProvider.loadInitialData(),
                   ),
+
                 // Top Header Section (App Logo Only)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -111,7 +146,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // Hero Banner Section (Matching Website Hero)
+                // Hero Banner Section
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
@@ -172,7 +207,7 @@ class HomeScreen extends StatelessWidget {
 
                       const SizedBox(height: 16),
 
-                      // Search Input (Matching Website Hero Search Bar)
+                      // Search Input
                       Container(
                         decoration: BoxDecoration(
                           color: isDark ? AppTheme.darkSurface : Colors.white,
@@ -210,26 +245,33 @@ class HomeScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            Container(
-                              margin: const EdgeInsets.all(4),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primary,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    'Book',
-                                    style: GoogleFonts.outfit(
-                                      fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF0F172A),
-                                      fontSize: 14,
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (context) => const ServicesScreen()),
+                                );
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.all(4),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primary,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      'Book',
+                                      style: GoogleFonts.outfit(
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFF0F172A),
+                                        fontSize: 14,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.arrow_forward_rounded, size: 16, color: Color(0xFF0F172A)),
-                                ],
+                                    const SizedBox(width: 4),
+                                    const Icon(Icons.arrow_forward_rounded, size: 16, color: Color(0xFF0F172A)),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
@@ -240,7 +282,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // 4 Trust Feature Cards Grid (Matching Website Hero Feature Grid)
+                // 4 Trust Feature Cards Grid
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(
@@ -258,28 +300,15 @@ class HomeScreen extends StatelessWidget {
 
                 const SizedBox(height: 28),
 
-                // Categories Section
+                // Categories Section Header (Without 'See All')
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Categories',
-                        style: GoogleFonts.outfit(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'See All',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryDark,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    'Categories',
+                    style: GoogleFonts.outfit(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -352,7 +381,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // Popular Services Header
+                // Popular Services Header (Navigates to ServicesScreen on 'Explore' click)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(
@@ -365,12 +394,31 @@ class HomeScreen extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text(
-                        'Explore',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryDark,
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const ServicesScreen(),
+                            ),
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            Text(
+                              'Explore',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryDark,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 12,
+                              color: AppTheme.primaryDark,
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -378,7 +426,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
 
-                // Services List
+                // Popular Services List Across All Main Categories
                 serviceProvider.isLoading
                     ? const Center(
                         child: Padding(
@@ -386,7 +434,7 @@ class HomeScreen extends StatelessWidget {
                           child: CircularProgressIndicator(),
                         ),
                       )
-                    : serviceProvider.services.isEmpty
+                    : popularServices.isEmpty
                         ? Padding(
                             padding: const EdgeInsets.all(24.0),
                             child: Center(
@@ -402,9 +450,9 @@ class HomeScreen extends StatelessWidget {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             padding: const EdgeInsets.symmetric(horizontal: 20),
-                            itemCount: serviceProvider.services.length,
+                            itemCount: popularServices.length,
                             itemBuilder: (context, index) {
-                              final service = serviceProvider.services[index];
+                              final service = popularServices[index];
                               return _buildServiceCard(context, service, index);
                             },
                           ),
@@ -579,6 +627,6 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
-    ).animate().fadeIn(delay: Duration(milliseconds: 100 * index)).slideY(begin: 0.1);
+    ).animate().fadeIn(delay: Duration(milliseconds: 100 * (index % 5))).slideY(begin: 0.1);
   }
 }
