@@ -24,40 +24,74 @@ class ServiceDetailScreen extends StatelessWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // Collapsible Image Header Bar
+          // Collapsible Image Header Bar with High Contrast Back Button
           SliverAppBar(
             expandedHeight: 250,
             pinned: true,
+            leading: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: CircleAvatar(
+                backgroundColor: Colors.black.withValues(alpha: 0.45),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+            ),
             flexibleSpace: FlexibleSpaceBar(
-              background: service.image.isNotEmpty
-                  ? Image.network(
-                      service.image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: AppTheme.primary,
-                        child: const Icon(Icons.build_rounded, size: 72, color: Color(0xFF0F172A)),
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  service.image.isNotEmpty
+                      ? Image.network(
+                          service.image,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: AppTheme.primary,
+                            child: const Icon(Icons.build_rounded, size: 72, color: Color(0xFF0F172A)),
+                          ),
+                        )
+                      : Container(
+                          color: AppTheme.primary,
+                          child: const Icon(Icons.build_rounded, size: 72, color: Color(0xFF0F172A)),
+                        ),
+                  // Dark Top Gradient Overlay for Back Button Visibility
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 90,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withValues(alpha: 0.6),
+                            Colors.transparent,
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
                       ),
-                    )
-                  : Container(
-                      color: AppTheme.primary,
-                      child: const Icon(Icons.build_rounded, size: 72, color: Color(0xFF0F172A)),
                     ),
+                  ),
+                ],
+              ),
             ),
           ),
 
           // Details Body
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 100.0), // Extra bottom padding prevents bottom bar overlap!
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (service.category != null)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                       decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(6),
+                        color: AppTheme.primary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         service.category!.name.toUpperCase(),
@@ -76,19 +110,21 @@ class ServiceDetailScreen extends StatelessWidget {
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: textPrimaryColor,
+                      height: 1.25,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
 
-                  // Highlights Bar (Duration & Rating)
-                  Row(
+                  // Highlights Wrap (Duration & Rating) - Prevents Row Text Overlapping!
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
                     children: [
                       _buildHighlightBadge(
                         context: context,
                         icon: Icons.timer_outlined,
                         label: '${service.duration} Mins Service',
                       ),
-                      const SizedBox(width: 12),
                       _buildHighlightBadge(
                         context: context,
                         icon: Icons.star_rounded,
@@ -131,7 +167,6 @@ class ServiceDetailScreen extends StatelessWidget {
                   _buildInclusionItem(context, 'Complete inspection and diagnosis included'),
                   _buildInclusionItem(context, '30-day post-service service guarantee'),
                   _buildInclusionItem(context, 'Transparent pricing with no hidden charges'),
-                  const SizedBox(height: 32),
                 ],
               ),
             ),
@@ -139,9 +174,9 @@ class ServiceDetailScreen extends StatelessWidget {
         ],
       ),
 
-      // Bottom Booking Bar
+      // Bottom Booking Bar with Safe Padding
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         decoration: BoxDecoration(
           color: cardBgColor,
           border: Border(top: BorderSide(color: cardBorderColor)),
@@ -156,6 +191,7 @@ class ServiceDetailScreen extends StatelessWidget {
         child: SafeArea(
           child: Row(
             children: [
+              // Price Section
               Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,17 +208,17 @@ class ServiceDetailScreen extends StatelessWidget {
                       Text(
                         '₹${service.finalPrice.toInt()}',
                         style: GoogleFonts.outfit(
-                          fontSize: 24,
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.primaryDark,
                         ),
                       ),
                       if (service.hasDiscount) ...[
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         Text(
                           '₹${service.price.toInt()}',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 14,
+                            fontSize: 13,
                             color: textSecondaryColor,
                             decoration: TextDecoration.lineThrough,
                           ),
@@ -192,10 +228,12 @@ class ServiceDetailScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(width: 24),
+              const SizedBox(width: 16),
+
+              // Book Now Button
               Expanded(
                 child: SizedBox(
-                  height: 52,
+                  height: 50,
                   child: ElevatedButton(
                     onPressed: () {
                       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -219,7 +257,15 @@ class ServiceDetailScreen extends StatelessWidget {
                         ),
                       );
                     },
-                    child: const Text('Book Service Now'),
+                    child: Text(
+                      'Book Service Now',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -253,16 +299,12 @@ class ServiceDetailScreen extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: iconColor),
           const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: textPrimaryColor,
-              ),
+          Text(
+            label,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textPrimaryColor,
             ),
           ),
         ],
@@ -277,8 +319,12 @@ class ServiceDetailScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.check_circle_rounded, color: AppTheme.success, size: 20),
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(Icons.check_circle_rounded, color: AppTheme.success, size: 18),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -286,6 +332,7 @@ class ServiceDetailScreen extends StatelessWidget {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 color: textPrimaryColor,
+                height: 1.35,
               ),
             ),
           ),
