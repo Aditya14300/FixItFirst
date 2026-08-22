@@ -172,7 +172,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Your service for ${widget.service.name} has been booked for ${DateFormat('EEE, MMM d').format(_selectedDate)} (${_selectedTimeSlot.split(' ')[0]}).',
+              'Your service for ${widget.service.name} has been booked for ${DateFormat('EEE, MMM d').format(_selectedDate)}.',
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
@@ -213,7 +213,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
-        childAspectRatio: 1.15,
+        childAspectRatio: 1.0, // Aspect ratio 1.0 ensures vertical padding without text overlap
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
       ),
@@ -262,36 +262,45 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
             ),
             child: Stack(
               children: [
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        dayLabel.toUpperCase(),
-                        style: GoogleFonts.outfit(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? const Color(0xFF0F172A) : AppTheme.primaryDark,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          dayLabel.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.outfit(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? const Color(0xFF0F172A) : AppTheme.primaryDark,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        dayNum,
-                        style: GoogleFonts.outfit(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          color: isSelected ? const Color(0xFF0F172A) : textPrimaryColor,
+                        const SizedBox(height: 2),
+                        Text(
+                          dayNum,
+                          maxLines: 1,
+                          style: GoogleFonts.outfit(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: isSelected ? const Color(0xFF0F172A) : textPrimaryColor,
+                          ),
                         ),
-                      ),
-                      Text(
-                        monthStr,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: isSelected ? const Color(0xFF0F172A) : textSecondaryColor,
+                        Text(
+                          monthStr,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected ? const Color(0xFF0F172A) : textSecondaryColor,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 if (isSelected)
@@ -349,7 +358,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: isSelected
                   ? (isDark ? AppTheme.darkSurface : AppTheme.primary.withValues(alpha: 0.12))
@@ -376,15 +385,17 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                     color: isSelected ? const Color(0xFF0F172A) : AppTheme.primaryDark,
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         slot['title']!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.outfit(
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: textPrimaryColor,
                         ),
@@ -392,6 +403,8 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                       const SizedBox(height: 2),
                       Text(
                         slot['timing']!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -466,6 +479,8 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                         children: [
                           Text(
                             widget.service.name,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.outfit(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -493,12 +508,14 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Select Date',
-                    style: GoogleFonts.outfit(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimaryColor,
+                  Expanded(
+                    child: Text(
+                      'Select Date',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimaryColor,
+                      ),
                     ),
                   ),
                   TextButton.icon(
@@ -545,7 +562,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
 
               // Service Address Section
               if (hasCurrentAddressText && !_isChangingAddress) ...[
-                // Highlighted Saved Address Card (User can go with previous address or change it)
+                // Highlighted Saved Address Card
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -562,19 +579,25 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.location_on_rounded, color: AppTheme.primaryDark, size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Service Address',
-                                style: GoogleFonts.outfit(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: textPrimaryColor,
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(Icons.location_on_rounded, color: AppTheme.primaryDark, size: 20),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    'Service Address',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.outfit(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: textPrimaryColor,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           TextButton.icon(
                             onPressed: () {
@@ -586,6 +609,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                             label: const Text('Change Address'),
                             style: TextButton.styleFrom(
                               foregroundColor: AppTheme.primaryDark,
+                              padding: EdgeInsets.zero,
                             ),
                           ),
                         ],
@@ -624,12 +648,14 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Service Address',
-                      style: GoogleFonts.outfit(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimaryColor,
+                    Expanded(
+                      child: Text(
+                        'Service Address',
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimaryColor,
+                        ),
                       ),
                     ),
                     if (hasCurrentAddressText)
