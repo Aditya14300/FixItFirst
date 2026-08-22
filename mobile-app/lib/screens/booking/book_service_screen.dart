@@ -23,18 +23,25 @@ class BookServiceScreen extends StatefulWidget {
 class _BookServiceScreenState extends State<BookServiceScreen> {
   final _formKey = GlobalKey<FormState>();
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
-  String _selectedTimeSlot = '10:00 AM - 12:00 PM';
+  String _selectedTimeSlot = 'Full Day (09:00 AM - 07:00 PM)';
   final _addressController = TextEditingController();
   final _notesController = TextEditingController();
 
   bool _isChangingAddress = false;
 
-  final List<String> _timeSlots = [
-    '08:00 AM - 10:00 AM',
-    '10:00 AM - 12:00 PM',
-    '01:00 PM - 03:00 PM',
-    '03:00 PM - 05:00 PM',
-    '05:00 PM - 07:00 PM',
+  final List<Map<String, String>> _timeSlots = [
+    {
+      'title': 'Full Day',
+      'timing': '09:00 AM - 07:00 PM',
+    },
+    {
+      'title': 'First Hours',
+      'timing': '09:00 AM - 01:00 PM',
+    },
+    {
+      'title': 'Second Hours',
+      'timing': '02:00 PM - 06:00 PM',
+    },
   ];
 
   @override
@@ -164,7 +171,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Your service for ${widget.service.name} has been booked for ${DateFormat('EEE, MMM d').format(_selectedDate)}.',
+              'Your service for ${widget.service.name} has been booked for ${DateFormat('EEE, MMM d').format(_selectedDate)} (${_selectedTimeSlot.split(' ')[0]}).',
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
@@ -311,6 +318,108 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
     );
   }
 
+  Widget _build3TimeSlotOptions(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+    final textSecondaryColor = isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary;
+    final cardBgColor = isDark ? AppTheme.darkSurface : Colors.white;
+    final cardBorderColor = isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
+
+    return Column(
+      children: _timeSlots.map((slot) {
+        final slotValue = '${slot['title']} (${slot['timing']})';
+        final isSelected = _selectedTimeSlot == slotValue;
+
+        IconData iconData;
+        if (slot['title'] == 'Full Day') {
+          iconData = Icons.wb_sunny_rounded;
+        } else if (slot['title'] == 'First Hours') {
+          iconData = Icons.wb_twilight_rounded;
+        } else {
+          iconData = Icons.nights_stay_rounded;
+        }
+
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              _selectedTimeSlot = slotValue;
+            });
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? (isDark ? AppTheme.darkSurface : AppTheme.primary.withValues(alpha: 0.12))
+                  : cardBgColor,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isSelected ? AppTheme.primaryDark : cardBorderColor,
+                width: isSelected ? 2.0 : 1.0,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppTheme.primary
+                        : AppTheme.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    iconData,
+                    size: 20,
+                    color: isSelected ? const Color(0xFF0F172A) : AppTheme.primaryDark,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        slot['title']!,
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        slot['timing']!,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isSelected ? AppTheme.primaryDark : textSecondaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Radio<String>(
+                  value: slotValue,
+                  groupValue: _selectedTimeSlot,
+                  activeColor: AppTheme.primaryDark,
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _selectedTimeSlot = value;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bookingProvider = Provider.of<BookingProvider>(context);
@@ -417,7 +526,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
               _build6DateSquareGrid(context),
               const SizedBox(height: 24),
 
-              // Time Slot Chips
+              // 3 Time Slot Options (Full Day, First Hours, Second Hours)
               Text(
                 'Select Time Slot',
                 style: GoogleFonts.outfit(
@@ -427,33 +536,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: _timeSlots.map((slot) {
-                  final isSelected = _selectedTimeSlot == slot;
-                  return ChoiceChip(
-                    label: Text(slot),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _selectedTimeSlot = slot;
-                        });
-                      }
-                    },
-                    selectedColor: AppTheme.primary,
-                    backgroundColor: cardBgColor,
-                    side: BorderSide(
-                      color: isSelected ? AppTheme.primary : cardBorderColor,
-                    ),
-                    labelStyle: GoogleFonts.plusJakartaSans(
-                      color: isSelected ? const Color(0xFF0F172A) : textPrimaryColor,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                    ),
-                  );
-                }).toList(),
-              ),
+              _build3TimeSlotOptions(context),
               const SizedBox(height: 24),
 
               // Service Address Section
