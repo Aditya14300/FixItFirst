@@ -129,11 +129,8 @@ class _LoginScreenState extends State<LoginScreen> {
             )
           else
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _showIpConfigDialog();
-              },
-              child: const Text('Change Server'),
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
             ),
           OutlinedButton(
             onPressed: () {
@@ -141,43 +138,6 @@ class _LoginScreenState extends State<LoginScreen> {
               _handleDemoLogin();
             },
             child: const Text('Demo Sign In'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showIpConfigDialog() {
-    final ipController = TextEditingController(text: ApiConstants.customIp);
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Configure Backend IP'),
-        content: TextField(
-          controller: ipController,
-          decoration: const InputDecoration(
-            hintText: 'e.g. https://fixitfirst.onrender.com',
-            labelText: 'Server URL / IP Address',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final nav = Navigator.of(context);
-              final messenger = ScaffoldMessenger.of(context);
-              await ApiConstants.setCustomIp(ipController.text);
-              if (mounted) {
-                nav.pop();
-                messenger.showSnackBar(
-                  SnackBar(content: Text('Server IP updated to ${ApiConstants.customIp}')),
-                );
-              }
-            },
-            child: const Text('Save IP'),
           ),
         ],
       ),
