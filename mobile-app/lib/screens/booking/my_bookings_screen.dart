@@ -31,6 +31,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   Widget build(BuildContext context) {
     final bookingProvider = Provider.of<BookingProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // If user is in Demo Mode or Guest (not logged in with a real account), show ONLY Log In & Sign Up options!
     if (!authProvider.isRealUser) {
@@ -58,7 +59,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           bottom: TabBar(
             indicatorColor: AppTheme.primary,
             labelColor: AppTheme.primary,
-            unselectedLabelColor: AppTheme.textSecondary,
+            unselectedLabelColor: isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary,
             labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 15),
             unselectedLabelStyle: GoogleFonts.outfit(fontWeight: FontWeight.w500, fontSize: 15),
             tabs: const [
@@ -198,6 +199,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
   Widget _buildBookingsList(BuildContext context, List<BookingModel> bookings, {required bool isHistory}) {
     final bookingProvider = Provider.of<BookingProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+    final textSecondaryColor = isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary;
 
     if (bookingProvider.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -211,7 +215,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             Icon(
               isHistory ? Icons.history_toggle_off_rounded : Icons.calendar_today_rounded,
               size: 64,
-              color: AppTheme.textSecondary.withValues(alpha: 0.5),
+              color: textSecondaryColor.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 14),
             Text(
@@ -219,14 +223,14 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
               style: GoogleFonts.outfit(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimary,
+                color: textPrimaryColor,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               isHistory ? 'Your past bookings will appear here.' : 'Book a service now to get expert help!',
               style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.textSecondary,
+                color: textSecondaryColor,
               ),
             ),
           ],
@@ -245,13 +249,28 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   }
 
   Widget _buildBookingCard(BuildContext context, BookingModel booking) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+    final textSecondaryColor = isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary;
+
+    final isActive = booking.status.toLowerCase() == 'confirmed' || booking.status.toLowerCase() == 'pending';
+
+    // Theme-adaptive non-white active booking background with primary border highlight
+    final cardBgColor = isDark
+        ? AppTheme.darkSurface
+        : (isActive ? const Color(0xFFF1F5F9) : Colors.white);
+
+    final cardBorderColor = isDark
+        ? AppTheme.darkBorder
+        : (isActive ? AppTheme.primaryDark.withValues(alpha: 0.4) : AppTheme.lightBorder);
+
     Color statusColor;
     switch (booking.status.toLowerCase()) {
       case 'confirmed':
         statusColor = AppTheme.success;
         break;
       case 'completed':
-        statusColor = AppTheme.primaryLight;
+        statusColor = AppTheme.primaryDark;
         break;
       case 'cancelled':
         statusColor = AppTheme.error;
@@ -264,12 +283,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBgColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: cardBorderColor, width: isActive ? 1.5 : 1.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
@@ -278,6 +297,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header Row: Booking ID & Status Badge
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -313,12 +333,14 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           ),
           const SizedBox(height: 12),
 
+          // Main Info: Service Icon, Name & Date/Time
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.08),
+                  color: AppTheme.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.build_rounded, color: AppTheme.primaryDark),
@@ -330,18 +352,23 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   children: [
                     Text(
                       booking.service.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.outfit(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
+                        color: textPrimaryColor,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${booking.date} | ${booking.timeSlot}',
+                      '${booking.date}  •  ${booking.timeSlot}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
-                        color: AppTheme.textSecondary,
+                        fontWeight: FontWeight.w600,
+                        color: textSecondaryColor,
                       ),
                     ),
                   ],
@@ -349,8 +376,32 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
               ),
             ],
           ),
-          const Divider(height: 24, color: AppTheme.border),
 
+          // Address Preview
+          if (booking.address.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(Icons.location_on_outlined, size: 14, color: textSecondaryColor),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    booking.address,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      color: textSecondaryColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          Divider(height: 24, color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder),
+
+          // Footer Row: Total Paid & Cancel Button
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -358,10 +409,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Total Paid',
+                    'Total Amount',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
-                      color: AppTheme.textSecondary,
+                      color: textSecondaryColor,
                     ),
                   ),
                   Text(
@@ -374,7 +425,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   ),
                 ],
               ),
-              if (booking.status.toLowerCase() == 'confirmed' || booking.status.toLowerCase() == 'pending')
+              if (isActive)
                 OutlinedButton.icon(
                   onPressed: () {
                     Provider.of<BookingProvider>(context, listen: false)

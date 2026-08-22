@@ -1,6 +1,7 @@
 const Booking = require("../models/Booking");
 const Service = require("../models/Service");
 const Category = require("../models/Category");
+const User = require("../models/User");
 
 // Get bookings (filtered by customerPhone query if provided, or all for admin)
 const getBookings = async (req, res) => {
@@ -27,7 +28,7 @@ const getBookings = async (req, res) => {
   }
 };
 
-// Create a booking & increment Category bookingCount
+// Create a booking, increment Category bookingCount & update User address
 const createBooking = async (req, res) => {
   try {
     const { customerName, customerPhone, serviceName, date, timeSlot, address, amount, notes } = req.body;
@@ -56,6 +57,18 @@ const createBooking = async (req, res) => {
       amount: cleanAmount,
       notes: cleanNotes,
     });
+
+    // Auto-update customer address column in User collection
+    try {
+      if (cleanCustomerPhone && cleanAddress) {
+        await User.findOneAndUpdate(
+          { phone: cleanCustomerPhone },
+          { address: cleanAddress }
+        );
+      }
+    } catch (e) {
+      console.log('Update user address error:', e);
+    }
 
     // Auto-increment bookingCount on parent Category
     try {

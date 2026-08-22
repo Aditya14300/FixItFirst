@@ -27,6 +27,8 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
   final _addressController = TextEditingController();
   final _notesController = TextEditingController();
 
+  bool _isChangingAddress = false;
+
   final List<String> _timeSlots = [
     '08:00 AM - 10:00 AM',
     '10:00 AM - 12:00 PM',
@@ -40,6 +42,8 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final addressProvider = Provider.of<AddressProvider>(context, listen: false);
+
       if (!authProvider.isAuthenticated) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -51,6 +55,18 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const RegisterScreen()),
         );
+        return;
+      }
+
+      // Auto pre-fill address from user.address or saved address if available
+      final existingAddress = authProvider.user?.address.trim().isNotEmpty == true
+          ? authProvider.user!.address.trim()
+          : (addressProvider.defaultAddress?.fullAddress ?? '');
+
+      if (existingAddress.isNotEmpty && _addressController.text.isEmpty) {
+        setState(() {
+          _addressController.text = existingAddress;
+        });
       }
     });
   }
@@ -81,17 +97,21 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
         return;
       }
 
+      final enteredAddress = _addressController.text.trim();
+
       final success = await bookingProvider.createBooking(
         service: widget.service,
         user: authProvider.user,
         date: DateFormat('yyyy-MM-dd').format(_selectedDate),
         timeSlot: _selectedTimeSlot,
-        address: _addressController.text.trim(),
+        address: enteredAddress,
         notes: _notesController.text.trim(),
       );
 
       if (mounted) {
         if (success) {
+          // Sync & update address column in User profile & SharedPreferences
+          await authProvider.updateUserAddress(enteredAddress);
           _showSuccessDialog();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -106,10 +126,15 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
   }
 
   void _showSuccessDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+    final textSecondaryColor = isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary;
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: isDark ? AppTheme.darkSurface : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -129,7 +154,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
               style: GoogleFonts.outfit(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimary,
+                color: textPrimaryColor,
               ),
             ),
             const SizedBox(height: 8),
@@ -138,7 +163,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
-                color: AppTheme.textSecondary,
+                color: textSecondaryColor,
               ),
             ),
             const SizedBox(height: 24),
@@ -164,6 +189,14 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
   @override
   Widget build(BuildContext context) {
     final bookingProvider = Provider.of<BookingProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+    final textSecondaryColor = isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary;
+    final cardBgColor = isDark ? AppTheme.darkSurface : Colors.white;
+    final cardBorderColor = isDark ? AppTheme.darkBorder : AppTheme.lightBorder;
+
+    final hasExistingAddress = _addressController.text.trim().isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
@@ -180,13 +213,15 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.06),
+                  color: isDark ? AppTheme.darkSurface : AppTheme.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: isDark ? AppTheme.darkBorder : AppTheme.primary.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.build_circle_rounded, color: AppTheme.primary, size: 36),
+                    const Icon(Icons.build_circle_rounded, color: AppTheme.primaryDark, size: 36),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Column(
@@ -197,14 +232,16 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                             style: GoogleFonts.outfit(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              color: AppTheme.textPrimary,
+                              color: textPrimaryColor,
                             ),
                           ),
+                          const SizedBox(height: 2),
                           Text(
                             'Amount: ₹${widget.service.finalPrice.toInt()}',
                             style: GoogleFonts.plusJakartaSans(
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.primary,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryDark,
+                              fontSize: 15,
                             ),
                           ),
                         ],
@@ -221,7 +258,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                 style: GoogleFonts.outfit(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+                  color: textPrimaryColor,
                 ),
               ),
               const SizedBox(height: 10),
@@ -242,9 +279,9 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardBgColor,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppTheme.border),
+                    border: Border.all(color: cardBorderColor),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -257,12 +294,12 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary,
+                            color: textPrimaryColor,
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(Icons.calendar_today_rounded, color: AppTheme.primary),
+                      const Icon(Icons.calendar_today_rounded, color: AppTheme.primaryDark),
                     ],
                   ),
                 ),
@@ -275,7 +312,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                 style: GoogleFonts.outfit(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+                  color: textPrimaryColor,
                 ),
               ),
               const SizedBox(height: 10),
@@ -295,12 +332,12 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                       }
                     },
                     selectedColor: AppTheme.primary,
-                    backgroundColor: Colors.white,
+                    backgroundColor: cardBgColor,
                     side: BorderSide(
-                      color: isSelected ? AppTheme.primary : AppTheme.border,
+                      color: isSelected ? AppTheme.primary : cardBorderColor,
                     ),
                     labelStyle: GoogleFonts.plusJakartaSans(
-                      color: isSelected ? Colors.white : AppTheme.textPrimary,
+                      color: isSelected ? const Color(0xFF0F172A) : textPrimaryColor,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                     ),
                   );
@@ -308,84 +345,161 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Address Input Header
-              Text(
-                'Service Address',
-                style: GoogleFonts.outfit(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Saved Address Quick Selector Chips
-              Consumer<AddressProvider>(
-                builder: (context, addressProvider, _) {
-                  if (addressProvider.addresses.isEmpty) return const SizedBox.shrink();
-
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: addressProvider.addresses.map((savedAddr) {
-                          final isSelected = _addressController.text.trim() == savedAddr.fullAddress.trim();
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ActionChip(
-                              avatar: Icon(
-                                savedAddr.tag == 'Home'
-                                    ? Icons.home_rounded
-                                    : savedAddr.tag == 'Work'
-                                        ? Icons.work_rounded
-                                        : Icons.location_on_rounded,
-                                size: 16,
-                                color: isSelected ? Colors.white : AppTheme.primary,
-                              ),
-                              label: Text(savedAddr.tag),
-                              backgroundColor: isSelected ? AppTheme.primary : Colors.white,
-                              labelStyle: GoogleFonts.plusJakartaSans(
-                                color: isSelected ? Colors.white : AppTheme.textPrimary,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                fontSize: 13,
-                              ),
-                              side: BorderSide(
-                                color: isSelected ? AppTheme.primary : AppTheme.border,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  _addressController.text = savedAddr.fullAddress;
-                                });
-                              },
-                            ),
-                          );
-                        }).toList(),
-                      ),
+              // Service Address Section
+              if (hasExistingAddress && !_isChangingAddress) ...[
+                // Highlighted Saved Address Card with "Change Address" Option
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppTheme.darkSurface : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isDark ? AppTheme.darkBorder : AppTheme.primaryDark.withValues(alpha: 0.4),
+                      width: 1.5,
                     ),
-                  );
-                },
-              ),
-              TextFormField(
-                controller: _addressController,
-                maxLines: 2,
-                maxLength: 150,
-                inputFormatters: [LengthLimitingTextInputFormatter(150)],
-                decoration: const InputDecoration(
-                  hintText: 'House/Flat No., Building, Street address',
-                  counterText: '',
-                  prefixIcon: Padding(
-                    padding: EdgeInsets.only(bottom: 24),
-                    child: Icon(Icons.home_outlined, color: AppTheme.textSecondary),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on_rounded, color: AppTheme.primaryDark, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Service Address',
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: textPrimaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                          TextButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _isChangingAddress = true;
+                              });
+                            },
+                            icon: const Icon(Icons.edit_location_alt_outlined, size: 16),
+                            label: const Text('Change Address'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppTheme.primaryDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _addressController.text,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimaryColor,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter service address';
-                  }
-                  return null;
-                },
-              ),
+              ] else ...[
+                // Address Input & Quick Selector
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Service Address',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textPrimaryColor,
+                      ),
+                    ),
+                    if (hasExistingAddress)
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _isChangingAddress = false;
+                          });
+                        },
+                        child: const Text('Done'),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // Saved Address Quick Selector Chips
+                Consumer<AddressProvider>(
+                  builder: (context, addressProvider, _) {
+                    if (addressProvider.addresses.isEmpty) return const SizedBox.shrink();
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: addressProvider.addresses.map((savedAddr) {
+                            final isSelected = _addressController.text.trim() == savedAddr.fullAddress.trim();
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ActionChip(
+                                avatar: Icon(
+                                  savedAddr.tag == 'Home'
+                                      ? Icons.home_rounded
+                                      : savedAddr.tag == 'Work'
+                                          ? Icons.work_rounded
+                                          : Icons.location_on_rounded,
+                                  size: 16,
+                                  color: isSelected ? const Color(0xFF0F172A) : AppTheme.primaryDark,
+                                ),
+                                label: Text(savedAddr.tag),
+                                backgroundColor: isSelected ? AppTheme.primary : cardBgColor,
+                                labelStyle: GoogleFonts.plusJakartaSans(
+                                  color: isSelected ? const Color(0xFF0F172A) : textPrimaryColor,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                  fontSize: 13,
+                                ),
+                                side: BorderSide(
+                                  color: isSelected ? AppTheme.primary : cardBorderColor,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _addressController.text = savedAddr.fullAddress;
+                                    _isChangingAddress = false;
+                                  });
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                TextFormField(
+                  controller: _addressController,
+                  maxLines: 2,
+                  maxLength: 150,
+                  inputFormatters: [LengthLimitingTextInputFormatter(150)],
+                  decoration: const InputDecoration(
+                    hintText: 'House/Flat No., Building, Street address',
+                    counterText: '',
+                    prefixIcon: Padding(
+                      padding: EdgeInsets.only(bottom: 24),
+                      child: Icon(Icons.home_outlined, color: AppTheme.textSecondary),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter service address';
+                    }
+                    return null;
+                  },
+                ),
+              ],
               const SizedBox(height: 20),
 
               // Additional Notes Input
@@ -394,7 +508,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                 style: GoogleFonts.outfit(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
+                  color: textPrimaryColor,
                 ),
               ),
               const SizedBox(height: 8),
@@ -416,7 +530,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                 child: ElevatedButton(
                   onPressed: bookingProvider.isSubmitting ? null : _handleConfirmBooking,
                   child: bookingProvider.isSubmitting
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? const CircularProgressIndicator(color: Color(0xFF0F172A))
                       : const Text('Confirm & Book Now'),
                 ),
               ),

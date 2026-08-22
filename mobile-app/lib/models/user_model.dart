@@ -3,6 +3,7 @@ class UserModel {
   final String name;
   final String email;
   final String phone;
+  final String address;
   final String role;
   final String profileImage;
   final bool isVerified;
@@ -12,6 +13,7 @@ class UserModel {
     required this.name,
     required this.email,
     required this.phone,
+    this.address = '',
     required this.role,
     this.profileImage = '',
     this.isVerified = false,
@@ -23,6 +25,7 @@ class UserModel {
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
+      address: json['address'] ?? '',
       role: json['role'] ?? 'customer',
       profileImage: json['profileImage'] ?? '',
       isVerified: json['isVerified'] ?? false,
@@ -35,6 +38,7 @@ class UserModel {
       'name': name,
       'email': email,
       'phone': phone,
+      'address': address,
       'role': role,
       'profileImage': profileImage,
       'isVerified': isVerified,

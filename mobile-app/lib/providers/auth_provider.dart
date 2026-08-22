@@ -30,6 +30,7 @@ class AuthProvider extends ChangeNotifier {
     final storedName = prefs.getString('user_name');
     final storedPhone = prefs.getString('user_phone');
     final storedEmail = prefs.getString('user_email');
+    final storedAddress = prefs.getString('user_address');
     final storedRole = prefs.getString('user_role');
     final storedId = prefs.getString('user_id');
 
@@ -39,6 +40,7 @@ class AuthProvider extends ChangeNotifier {
         name: storedName,
         email: storedEmail ?? '',
         phone: storedPhone ?? '',
+        address: storedAddress ?? '',
         role: storedRole ?? 'customer',
       );
       notifyListeners();
@@ -70,6 +72,7 @@ class AuthProvider extends ChangeNotifier {
             name: response['name'] ?? 'User',
             email: response['email'] ?? '',
             phone: phone.trim(),
+            address: response['address'] ?? '',
             role: response['role'] ?? 'customer',
           );
         }
@@ -108,6 +111,7 @@ class AuthProvider extends ChangeNotifier {
       name: name,
       email: 'demo@fixitfirst.com',
       phone: phone,
+      address: '123 Demo Street, Suite 100',
       role: 'customer',
       isVerified: true,
     );
@@ -146,7 +150,6 @@ class AuthProvider extends ChangeNotifier {
       );
 
       if (response != null && (response['success'] == true || response['token'] != null || response['user'] != null)) {
-        // If backend directly returns user session & token upon registration
         if (response['token'] != null) {
           _token = response['token'];
           if (response['user'] != null) {
@@ -166,7 +169,6 @@ class AuthProvider extends ChangeNotifier {
           return true;
         }
 
-        // Auto-login to obtain session if registration succeeds
         return await login(phone.trim(), password);
       } else {
         final serverMsg = response?['message'] ?? response?['error'] ?? 'Registration failed.';
@@ -185,6 +187,24 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> updateUserAddress(String addressStr) async {
+    if (_user != null) {
+      _user = UserModel(
+        id: _user!.id,
+        name: _user!.name,
+        email: _user!.email,
+        phone: _user!.phone,
+        address: addressStr,
+        role: _user!.role,
+        profileImage: _user!.profileImage,
+        isVerified: _user!.isVerified,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_address', addressStr);
+      notifyListeners();
+    }
+  }
+
   Future<void> _saveUserSession(String tokenStr, UserModel userObj) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', tokenStr);
@@ -192,6 +212,7 @@ class AuthProvider extends ChangeNotifier {
     await prefs.setString('user_name', userObj.name);
     await prefs.setString('user_phone', userObj.phone);
     await prefs.setString('user_email', userObj.email);
+    await prefs.setString('user_address', userObj.address);
     await prefs.setString('user_role', userObj.role);
     notifyListeners();
   }
