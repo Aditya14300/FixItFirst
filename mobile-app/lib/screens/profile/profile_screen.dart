@@ -6,6 +6,7 @@ import '../../providers/address_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_screen.dart';
+import '../auth/welcome_auth_screen.dart';
 import 'saved_addresses_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -151,7 +152,7 @@ class ProfileScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        // Log In Button (Dark Slate button with crisp white text)
+                        // Log In Button
                         Expanded(
                           child: SizedBox(
                             height: 48,
@@ -184,7 +185,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 12),
 
-                        // Sign Up Button (Bright Yellow button with dark slate text)
+                        // Sign Up Button
                         Expanded(
                           child: SizedBox(
                             height: 48,
@@ -277,14 +278,20 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 28),
 
-            // Logout Button (Shown ONLY for REAL authenticated accounts)
+            // Logout Button (Navigates directly to WelcomeAuthScreen)
             if (authProvider.isRealUser)
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: OutlinedButton.icon(
-                  onPressed: () {
-                    authProvider.logout();
+                  onPressed: () async {
+                    await authProvider.logout();
+                    if (context.mounted) {
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (context) => const WelcomeAuthScreen()),
+                        (route) => false,
+                      );
+                    }
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTheme.error,
