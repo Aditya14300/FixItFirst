@@ -138,10 +138,14 @@ class BookingProvider extends ChangeNotifier {
     }
   }
 
-  // Real-Time Order Cancellation (Strictly live backend API)
-  Future<void> cancelBooking(String bookingId) async {
+  // Real-Time Order Cancellation with Reason (Strictly live backend API)
+  Future<bool> cancelBooking(String bookingId, {String reason = 'Cancelled by user'}) async {
     try {
-      final res = await ApiService.put('/bookings/$bookingId/cancel', {}, requireAuth: true);
+      final res = await ApiService.put('/bookings/$bookingId/cancel', {
+        'reason': reason,
+        'cancellationReason': reason,
+      }, requireAuth: true);
+
       if (res != null && res['booking'] != null) {
         final updated = BookingModel.fromJson(res['booking']);
         final index = _bookings.indexWhere((b) => b.id == bookingId);
@@ -151,8 +155,10 @@ class BookingProvider extends ChangeNotifier {
         }
       }
       fetchBookings(userPhone: _activeUserPhone, isSilent: true);
+      return true;
     } catch (e) {
       debugPrint('Cancellation API sync failed: $e');
+      return false;
     }
   }
 

@@ -27,6 +27,229 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     });
   }
 
+  void _showCancellationReasonModal(BuildContext context, BookingModel booking) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimaryColor = isDark ? AppTheme.textDarkPrimary : AppTheme.textLightPrimary;
+    final textSecondaryColor = isDark ? AppTheme.textDarkSecondary : AppTheme.textLightSecondary;
+    final cardBgColor = isDark ? AppTheme.darkSurface : Colors.white;
+
+    final reasons = [
+      'Booked by mistake / wrong service selected',
+      'Schedule conflict / change of plans',
+      'Found a better price / alternative option',
+      'Need to change address or time slot',
+      'Other (Please specify below)',
+    ];
+
+    String selectedReason = reasons[0];
+    final otherReasonController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: cardBgColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final isOtherSelected = selectedReason == reasons.last;
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: textSecondaryColor.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  Row(
+                    children: [
+                      const Icon(Icons.cancel_outlined, color: AppTheme.error, size: 24),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Cancel Booking',
+                        style: GoogleFonts.outfit(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: textPrimaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Please select a reason for cancelling this booking:',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      color: textSecondaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Radio buttons for predefined cancellation reasons
+                  ...reasons.map((reason) {
+                    final isSelected = selectedReason == reason;
+                    return GestureDetector(
+                      onTap: () {
+                        setModalState(() {
+                          selectedReason = reason;
+                        });
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppTheme.primary.withValues(alpha: 0.12)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isSelected ? AppTheme.primaryDark : (isDark ? AppTheme.darkBorder : AppTheme.lightBorder),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Radio<String>(
+                              value: reason,
+                              groupValue: selectedReason,
+                              activeColor: AppTheme.primaryDark,
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setModalState(() {
+                                    selectedReason = val;
+                                  });
+                                }
+                              },
+                            ),
+                            Expanded(
+                              child: Text(
+                                reason,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                  color: textPrimaryColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+
+                  // If "Other" is selected, show Text Field
+                  if (isOtherSelected) ...[
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: otherReasonController,
+                      maxLength: 150,
+                      maxLines: 2,
+                      style: GoogleFonts.plusJakartaSans(color: textPrimaryColor),
+                      decoration: InputDecoration(
+                        hintText: 'Please describe your cancellation reason here...',
+                        hintStyle: GoogleFonts.plusJakartaSans(color: textSecondaryColor),
+                        counterText: '',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppTheme.primaryDark),
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 20),
+
+                  Row(
+                    children: [
+                      // Keep Booking Button
+                      Expanded(
+                        child: SizedBox(
+                          height: 48,
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            style: OutlinedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text('Keep Booking'),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Confirm Cancellation Button
+                      Expanded(
+                        child: SizedBox(
+                          height: 48,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              final finalReason = isOtherSelected
+                                  ? (otherReasonController.text.trim().isNotEmpty
+                                      ? otherReasonController.text.trim()
+                                      : 'Other reason')
+                                  : selectedReason;
+
+                              Navigator.of(context).pop();
+
+                              final success = await Provider.of<BookingProvider>(context, listen: false)
+                                  .cancelBooking(booking.id, reason: finalReason);
+
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(success ? 'Booking cancelled successfully' : 'Cancellation failed'),
+                                    backgroundColor: success ? AppTheme.primaryDark : AppTheme.error,
+                                  ),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.error,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              'Confirm Cancel',
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bookingProvider = Provider.of<BookingProvider>(context);
@@ -399,6 +622,29 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             ),
           ],
 
+          // Cancellation Reason Badge (If Cancelled)
+          if (booking.status.toLowerCase() == 'cancelled' && booking.cancellationReason.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.info_outline, size: 14, color: AppTheme.error.withValues(alpha: 0.85)),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    'Reason: ${booking.cancellationReason}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      color: AppTheme.error.withValues(alpha: 0.9),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+
           Divider(height: 24, color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder),
 
           // Footer Row: Total Paid & Cancel Button
@@ -428,8 +674,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
               if (isActive)
                 OutlinedButton.icon(
                   onPressed: () {
-                    Provider.of<BookingProvider>(context, listen: false)
-                        .cancelBooking(booking.id);
+                    _showCancellationReasonModal(context, booking);
                   },
                   icon: const Icon(Icons.cancel_outlined, size: 16),
                   label: const Text('Cancel Order'),

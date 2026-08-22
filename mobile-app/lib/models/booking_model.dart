@@ -11,6 +11,7 @@ class BookingModel {
   final String status; // 'pending', 'confirmed', 'completed', 'cancelled'
   final double totalAmount;
   final String notes;
+  final String cancellationReason;
   final DateTime createdAt;
 
   BookingModel({
@@ -23,6 +24,7 @@ class BookingModel {
     this.status = 'pending',
     required this.totalAmount,
     this.notes = '',
+    this.cancellationReason = '',
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -61,6 +63,7 @@ class BookingModel {
       status: json['status'] ?? 'pending',
       totalAmount: (json['amount'] ?? json['totalAmount'] ?? 0).toDouble(),
       notes: json['notes'] ?? '',
+      cancellationReason: json['cancellationReason'] ?? '',
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
@@ -78,6 +81,7 @@ class BookingModel {
       'status': status,
       'totalAmount': totalAmount,
       'notes': notes,
+      'cancellationReason': cancellationReason,
       'createdAt': createdAt.toIso8601String(),
     };
   }

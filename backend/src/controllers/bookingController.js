@@ -125,14 +125,19 @@ const updateBookingStatus = async (req, res) => {
   }
 };
 
-// Cancel a booking by customer
+// Cancel a booking by customer with cancellation reason
 const cancelBooking = async (req, res) => {
   try {
     const { id } = req.params;
+    const { reason, cancellationReason } = req.body;
+    const finalReason = String(reason || cancellationReason || 'Cancelled by customer').trim().substring(0, 200);
 
     const booking = await Booking.findByIdAndUpdate(
       id,
-      { status: "cancelled" },
+      {
+        status: "cancelled",
+        cancellationReason: finalReason,
+      },
       { new: true }
     );
 

@@ -48,6 +48,10 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    cancellationReason: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,
