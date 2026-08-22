@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/app_theme.dart';
+import '../../providers/address_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
 import '../auth/register_screen.dart';
+import 'saved_addresses_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -196,11 +198,24 @@ class ProfileScreen extends StatelessWidget {
             // Profile Actions List
             _buildSectionHeader('Account Settings'),
             const SizedBox(height: 10),
-            _buildProfileTile(
-              icon: Icons.location_on_outlined,
-              title: 'Saved Addresses',
-              subtitle: 'Manage home & office service locations',
-              onTap: () {},
+            Consumer<AddressProvider>(
+              builder: (context, addressProvider, _) {
+                final def = addressProvider.defaultAddress;
+                final subtitleText = def != null
+                    ? '${def.tag}: ${def.fullAddress}'
+                    : 'Manage home & office service locations';
+
+                return _buildProfileTile(
+                  icon: Icons.location_on_outlined,
+                  title: 'Saved Addresses',
+                  subtitle: subtitleText,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const SavedAddressesScreen()),
+                    );
+                  },
+                );
+              },
             ),
             _buildProfileTile(
               icon: Icons.payment_outlined,

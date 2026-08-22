@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../core/app_theme.dart';
 import '../../models/service_model.dart';
+import '../../providers/address_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/booking_provider.dart';
 import '../auth/register_screen.dart';
@@ -38,6 +39,14 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final addressProvider = Provider.of<AddressProvider>(context, listen: false);
+      final def = addressProvider.defaultAddress;
+      if (def != null && _addressController.text.isEmpty) {
+        setState(() {
+          _addressController.text = def.fullAddress;
+        });
+      }
+
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       if (!authProvider.isAuthenticated) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -307,7 +316,7 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Address Input
+              // Address Input Header
               Text(
                 'Service Address',
                 style: GoogleFonts.outfit(
@@ -316,7 +325,55 @@ class _BookServiceScreenState extends State<BookServiceScreen> {
                   color: AppTheme.textPrimary,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
+
+              // Saved Address Quick Selector Chips
+              Consumer<AddressProvider>(
+                builder: (context, addressProvider, _) {
+                  if (addressProvider.addresses.isEmpty) return const SizedBox.shrink();
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: addressProvider.addresses.map((savedAddr) {
+                          final isSelected = _addressController.text.trim() == savedAddr.fullAddress.trim();
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ActionChip(
+                              avatar: Icon(
+                                savedAddr.tag == 'Home'
+                                    ? Icons.home_rounded
+                                    : savedAddr.tag == 'Work'
+                                        ? Icons.work_rounded
+                                        : Icons.location_on_rounded,
+                                size: 16,
+                                color: isSelected ? Colors.white : AppTheme.primary,
+                              ),
+                              label: Text(savedAddr.tag),
+                              backgroundColor: isSelected ? AppTheme.primary : Colors.white,
+                              labelStyle: GoogleFonts.plusJakartaSans(
+                                color: isSelected ? Colors.white : AppTheme.textPrimary,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                fontSize: 13,
+                              ),
+                              side: BorderSide(
+                                color: isSelected ? AppTheme.primary : AppTheme.border,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _addressController.text = savedAddr.fullAddress;
+                                });
+                              },
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  );
+                },
+              ),
               TextFormField(
                 controller: _addressController,
                 maxLines: 2,

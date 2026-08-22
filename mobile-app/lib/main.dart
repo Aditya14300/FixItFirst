@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/api_constants.dart';
 import 'core/app_theme.dart';
+import 'providers/address_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/booking_provider.dart';
 import 'providers/service_provider.dart';
@@ -23,6 +24,7 @@ class FixItFirstApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ServiceProvider()),
         ChangeNotifierProvider(create: (_) => BookingProvider()),
+        ChangeNotifierProvider(create: (_) => AddressProvider()),
       ],
       child: MaterialApp(
         title: 'FixitFirst Mobile',
