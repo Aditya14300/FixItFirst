@@ -9,7 +9,6 @@ import {
   Calendar,
   Clock,
   MapPin,
-  CreditCard,
   Ticket,
   CheckCircle2,
   Phone,
@@ -18,7 +17,6 @@ import {
   QrCode,
   Banknote,
   AlertCircle,
-  Edit3,
   Check,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -39,11 +37,35 @@ function BookingFormContent() {
   const [serviceTitle, setServiceTitle] = useState("AC Deep Service & Jet Wash");
   const [basePrice, setBasePrice] = useState(799);
 
+  // Generate 4 consecutive Date Options dynamically
+  const getDateOptions = () => {
+    const dates = [];
+    const today = new Date();
+    for (let i = 0; i < 4; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const iso = d.toISOString().split("T")[0];
+      const dayLabel = i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString("en-US", { weekday: "short" });
+      const dateSub = d.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+      dates.push({ iso, dayLabel, dateSub, full: `${dateSub} (${dayLabel})` });
+    }
+    return dates;
+  };
+
+  const dateOptions = getDateOptions();
+
+  // 3 Specific Time Slot Options requested by user
+  const timeSlotOptions = [
+    { id: "1st Hour", title: "1st Hour", timeRange: "09:00 AM - 12:00 PM", badge: "Morning" },
+    { id: "2nd Hour", title: "2nd Hour", timeRange: "02:00 PM - 05:00 PM", badge: "Afternoon" },
+    { id: "Full Day", title: "Full Day", timeRange: "09:00 AM - 07:00 PM", badge: "Flexible" },
+  ];
+
   const [formData, setFormData] = useState({
     customerPhone: "",
     customerName: "",
-    date: new Date().toISOString().split("T")[0],
-    timeSlot: "10:00 AM - 12:00 PM",
+    date: dateOptions[0]?.iso || "",
+    timeSlot: "1st Hour",
     address: "",
     paymentMethod: "UPI Instant", // "UPI Instant" or "Pay After Service"
     coupon: "",
@@ -85,6 +107,14 @@ function BookingFormContent() {
   const discountAmount = (basePrice * formData.discount) / 100;
   const totalAmount = Math.max(0, basePrice + convenienceFee - discountAmount);
 
+  // Check if ALL required booking details are properly filled before enabling the submit button!
+  const isFormValid =
+    formData.customerPhone.length === 10 &&
+    Boolean(formData.date) &&
+    Boolean(formData.timeSlot) &&
+    formData.address.trim().length >= 5 &&
+    Boolean(formData.paymentMethod);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name === "customerPhone") {
@@ -106,41 +136,23 @@ function BookingFormContent() {
     }
   };
 
-  const timeSlots = [
-    "09:00 AM - 11:00 AM",
-    "10:00 AM - 12:00 PM",
-    "01:00 PM - 03:00 PM",
-    "04:00 PM - 06:00 PM",
-    "06:00 PM - 08:00 PM",
-  ];
-
   const handleFinalBooking = async () => {
-    // 1. Phone number validation (must be exactly 10 digits)
-    if (!formData.customerPhone || formData.customerPhone.length !== 10) {
-      setErrorMessage("Please enter a valid 10-digit mobile number.");
-      return;
-    }
-
-    // 2. Date & Time slot validation
-    if (!formData.date || !formData.timeSlot) {
-      setErrorMessage("Please select a date and time slot.");
-      return;
-    }
-
-    // 3. Address validation
-    if (!formData.address.trim() || formData.address.trim().length < 5) {
-      setErrorMessage("Please enter your complete service address.");
+    if (!isFormValid) {
+      setErrorMessage("Please fill all required fields completely.");
       return;
     }
 
     setLoading(true);
     setErrorMessage("");
 
+    const selectedDateObj = dateOptions.find((d) => d.iso === formData.date);
+    const dateFormattedString = selectedDateObj ? selectedDateObj.full : formData.date;
+
     const payload = {
       customerPhone: formData.customerPhone,
       customerName: formData.customerName || "Customer",
       serviceName: serviceTitle,
-      date: formData.date,
+      date: dateFormattedString,
       timeSlot: formData.timeSlot,
       address: formData.address,
       paymentMethod: formData.paymentMethod, // "UPI Instant" or "Pay After Service"
@@ -182,7 +194,7 @@ function BookingFormContent() {
             Quick Service Booking
           </h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-            Enter phone number, select date & time, address, and payment method to instantly book
+            Enter phone number, choose date, slot, address & payment method
           </p>
         </div>
 
@@ -208,7 +220,7 @@ function BookingFormContent() {
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                     Enter Mobile Number
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">10-digit number for order updates & technician contact</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">10-digit phone number required</p>
                 </div>
               </div>
 
@@ -233,7 +245,12 @@ function BookingFormContent() {
                   </div>
                   {formData.customerPhone.length > 0 && formData.customerPhone.length < 10 && (
                     <p className="text-[11px] text-amber-500 mt-1 font-semibold">
-                      {10 - formData.customerPhone.length} more digits required
+                      ⚠️ {10 - formData.customerPhone.length} more digits required
+                    </p>
+                  )}
+                  {formData.customerPhone.length === 10 && (
+                    <p className="text-[11px] text-emerald-500 mt-1 font-bold flex items-center gap-1">
+                      <Check size={12} /> Valid 10-digit number
                     </p>
                   )}
                 </div>
@@ -257,7 +274,7 @@ function BookingFormContent() {
               </div>
             </div>
 
-            {/* STEP 2: Choose Date & Slot */}
+            {/* STEP 2: Choose 4 Date Options & 3 Slot Options */}
             <div className="rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-6 sm:p-8 shadow-sm space-y-6">
               <div className="flex items-center gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
                 <div className="h-10 w-10 rounded-xl bg-yellow-400 text-slate-950 flex items-center justify-center font-black">
@@ -267,50 +284,68 @@ function BookingFormContent() {
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                     Choose Date & Time Slot
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Select when you want our technician to visit</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Select from 4 available dates and 3 time slots</p>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-                  Select Date *
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input
-                    type="date"
-                    name="date"
-                    min={new Date().toISOString().split("T")[0]}
-                    value={formData.date}
-                    onChange={handleInputChange}
-                    className="w-full h-13 pl-12 pr-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-yellow-400 cursor-pointer"
-                  />
-                </div>
-              </div>
-
+              {/* 4 Date Options */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
-                  Select Time Slot *
+                  Select Date (4 Options) *
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {timeSlots.map((slot) => {
-                    const isSelected = formData.timeSlot === slot;
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {dateOptions.map((item) => {
+                    const isSelected = formData.date === item.iso;
                     return (
                       <button
-                        key={slot}
+                        key={item.iso}
                         type="button"
-                        onClick={() => setFormData({ ...formData, timeSlot: slot })}
-                        className={`p-3.5 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all ${
+                        onClick={() => setFormData({ ...formData, date: item.iso })}
+                        className={`p-3.5 rounded-2xl border text-center transition-all ${
                           isSelected
-                            ? "bg-yellow-400/15 border-yellow-400 text-yellow-600 dark:text-yellow-400 shadow-sm"
+                            ? "bg-yellow-400/15 border-yellow-400 text-yellow-600 dark:text-yellow-400 ring-2 ring-yellow-400/20 font-bold shadow-sm"
                             : "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-slate-300"
                         }`}
                       >
-                        <span className="flex items-center gap-2">
-                          <Clock size={14} className={isSelected ? "text-yellow-500" : "text-slate-400"} />
-                          {slot}
+                        <span className="block text-sm font-black">{item.dayLabel}</span>
+                        <span className="block text-[11px] opacity-80 mt-0.5">{item.dateSub}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 3 Slot Options: 1st Hour, 2nd Hour, Full Day */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
+                  Select Slot (3 Options: 1st Hour, 2nd Hour, Full Day) *
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {timeSlotOptions.map((slot) => {
+                    const isSelected = formData.timeSlot === slot.id;
+                    return (
+                      <button
+                        key={slot.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, timeSlot: slot.id })}
+                        className={`p-4 rounded-2xl border text-left flex flex-col justify-between transition-all ${
+                          isSelected
+                            ? "bg-yellow-400/15 border-yellow-400 text-yellow-600 dark:text-yellow-400 ring-2 ring-yellow-400/20 font-bold shadow-sm"
+                            : "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full mb-1">
+                          <span className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                            <Clock size={14} className="text-yellow-500" />
+                            {slot.title}
+                          </span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-yellow-400/20 text-yellow-600 dark:text-yellow-400 uppercase">
+                            {slot.badge}
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                          {slot.timeRange}
                         </span>
-                        {isSelected && <Check size={14} className="text-yellow-500" />}
                       </button>
                     );
                   })}
@@ -347,6 +382,11 @@ function BookingFormContent() {
                     className="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white outline-none focus:border-yellow-400"
                   />
                 </div>
+                {formData.address.trim().length > 0 && formData.address.trim().length < 5 && (
+                  <p className="text-[11px] text-amber-500 mt-1 font-semibold">
+                    ⚠️ Please enter a detailed address
+                  </p>
+                )}
               </div>
             </div>
 
@@ -470,7 +510,11 @@ function BookingFormContent() {
                   </div>
                 )}
                 <div className="flex justify-between pt-2 border-t border-white/10 text-xs">
-                  <span className="text-slate-400">Payment Preference:</span>
+                  <span className="text-slate-400">Time Slot:</span>
+                  <span className="font-bold text-white">{formData.timeSlot}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-400">Payment:</span>
                   <span className="font-bold text-yellow-400">{formData.paymentMethod}</span>
                 </div>
               </div>
@@ -505,10 +549,15 @@ function BookingFormContent() {
                 </div>
               </div>
 
+              {/* Confirm & Book Now Button (Disabled until ALL details are filled) */}
               <button
                 onClick={handleFinalBooking}
-                disabled={loading}
-                className="w-full h-14 rounded-2xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black text-base flex items-center justify-center gap-2 shadow-lg shadow-yellow-400/20 transition-all disabled:opacity-50"
+                disabled={!isFormValid || loading}
+                className={`w-full h-14 rounded-2xl font-black text-base flex items-center justify-center gap-2 shadow-lg transition-all ${
+                  isFormValid && !loading
+                    ? "bg-yellow-400 hover:bg-yellow-300 text-slate-950 shadow-yellow-400/20 cursor-pointer"
+                    : "bg-slate-800 text-slate-500 border border-white/10 cursor-not-allowed shadow-none opacity-60"
+                }`}
               >
                 {loading ? (
                   <div className="h-5 w-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
@@ -520,8 +569,14 @@ function BookingFormContent() {
                 )}
               </button>
 
+              {!isFormValid && (
+                <p className="text-[11px] text-center text-amber-400/90 font-medium leading-relaxed bg-amber-400/10 p-2.5 rounded-xl border border-amber-400/20">
+                  ⚠️ Fill 10-digit phone number & full address to enable booking
+                </p>
+              )}
+
               <p className="text-[11px] text-center text-slate-400">
-                🔒 Stores in <span className="text-yellow-400 font-bold">Insta-bookings</span> database collection
+                🔒 Saved under <span className="text-yellow-400 font-bold">Insta-bookings</span> collection
               </p>
             </div>
           </div>
