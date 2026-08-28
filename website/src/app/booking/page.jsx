@@ -16,10 +16,10 @@ import {
   User,
   ShieldCheck,
   QrCode,
-  Building,
   Banknote,
   AlertCircle,
   Edit3,
+  Check,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "@/app/services/api";
@@ -35,25 +35,20 @@ function BookingFormContent() {
   const [loading, setLoading] = useState(false);
   const [successBooking, setSuccessBooking] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [isEditingContact, setIsEditingContact] = useState(false);
 
   const [serviceTitle, setServiceTitle] = useState("AC Deep Service & Jet Wash");
   const [basePrice, setBasePrice] = useState(799);
 
   const [formData, setFormData] = useState({
-    customerName: "",
     customerPhone: "",
+    customerName: "",
     date: new Date().toISOString().split("T")[0],
     timeSlot: "10:00 AM - 12:00 PM",
     address: "",
-    notes: "",
+    paymentMethod: "UPI Instant", // "UPI Instant" or "Pay After Service"
     coupon: "",
     discount: 0,
-    paymentMethod: "upi", // upi, card, netbanking, cod
     upiId: "",
-    cardNumber: "",
-    cardExpiry: "",
-    cardCvv: "",
   });
 
   // Read selected service title and price dynamically whenever URL searchParams change!
@@ -81,7 +76,7 @@ function BookingFormContent() {
       setFormData((prev) => ({
         ...prev,
         customerName: currentUser.name || prev.customerName || "Valued Customer",
-        customerPhone: currentUser.phone || prev.customerPhone || "9876543210",
+        customerPhone: currentUser.phone || prev.customerPhone || "",
       }));
     }
   }, [user]);
@@ -91,22 +86,50 @@ function BookingFormContent() {
   const totalAmount = Math.max(0, basePrice + convenienceFee - discountAmount);
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === "customerPhone") {
+      // Clean phone to only numbers max 10 digits
+      const cleaned = value.replace(/\D/g, "").slice(0, 10);
+      setFormData((prev) => ({ ...prev, customerPhone: cleaned }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
     setErrorMessage("");
   };
 
   const applyCoupon = () => {
     if (formData.coupon.toUpperCase() === "FIXITFIRST25") {
-      setFormData({ ...formData, discount: 25 });
+      setFormData((prev) => ({ ...prev, discount: 25 }));
       setErrorMessage("");
     } else {
       setErrorMessage("Invalid Coupon Code. Use: FIXITFIRST25 for 25% OFF!");
     }
   };
 
+  const timeSlots = [
+    "09:00 AM - 11:00 AM",
+    "10:00 AM - 12:00 PM",
+    "01:00 PM - 03:00 PM",
+    "04:00 PM - 06:00 PM",
+    "06:00 PM - 08:00 PM",
+  ];
+
   const handleFinalBooking = async () => {
-    if (!formData.customerName.trim() || !formData.customerPhone.trim() || !formData.address.trim()) {
-      setErrorMessage("Please enter your service address.");
+    // 1. Phone number validation (must be exactly 10 digits)
+    if (!formData.customerPhone || formData.customerPhone.length !== 10) {
+      setErrorMessage("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+
+    // 2. Date & Time slot validation
+    if (!formData.date || !formData.timeSlot) {
+      setErrorMessage("Please select a date and time slot.");
+      return;
+    }
+
+    // 3. Address validation
+    if (!formData.address.trim() || formData.address.trim().length < 5) {
+      setErrorMessage("Please enter your complete service address.");
       return;
     }
 
@@ -114,28 +137,29 @@ function BookingFormContent() {
     setErrorMessage("");
 
     const payload = {
-      customerName: formData.customerName,
       customerPhone: formData.customerPhone,
+      customerName: formData.customerName || "Customer",
       serviceName: serviceTitle,
       date: formData.date,
       timeSlot: formData.timeSlot,
       address: formData.address,
+      paymentMethod: formData.paymentMethod, // "UPI Instant" or "Pay After Service"
       amount: totalAmount,
-      notes: `Payment: ${formData.paymentMethod.toUpperCase()} | Notes: ${formData.notes}`,
+      notes: `Payment: ${formData.paymentMethod}`,
     };
 
     try {
-      // Save directly to MongoDB Database
+      // Save directly to MongoDB Database under "Insta-bookings" collection!
       const res = await api.post("/bookings", payload);
-      if (res.data && res.data.booking) {
-        setSuccessBooking(res.data.booking);
+      if (res.data && (res.data.booking || res.data.instaBooking)) {
+        setSuccessBooking(res.data.booking || res.data.instaBooking);
       } else {
-        setSuccessBooking({ _id: `BK-${Date.now()}`, ...payload });
+        setSuccessBooking({ _id: `INSTA-${Date.now()}`, ...payload });
       }
     } catch (err) {
       console.warn("Backend request failed, saving locally:", err.message);
       const fallbackObj = {
-        _id: `BK-${Math.floor(100000 + Math.random() * 900000)}`,
+        _id: `INSTA-${Math.floor(100000 + Math.random() * 900000)}`,
         ...payload,
         status: "confirmed",
       };
@@ -149,16 +173,16 @@ function BookingFormContent() {
     <main className="min-h-screen bg-slate-50 dark:bg-[#030712] pt-28 pb-20 px-4 sm:px-6 transition-colors duration-300">
       <div className="max-w-6xl mx-auto">
         
-        {/* Header */}
+        {/* Page Header */}
         <div className="mb-10 text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-yellow-400/30 bg-yellow-400/10 px-4 py-1.5 text-xs font-bold text-yellow-600 dark:text-yellow-400 uppercase tracking-wider">
-            <ShieldCheck size={14} /> 100% Guaranteed & Safe Service
+            <ShieldCheck size={14} /> 100% Guaranteed & Safe Booking
           </span>
           <h1 className="mt-4 text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
-            Complete Your Booking
+            Quick Service Booking
           </h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-            Review service summary, schedule & payment preference
+            Enter phone number, select date & time, address, and payment method to instantly book
           </p>
         </div>
 
@@ -171,132 +195,146 @@ function BookingFormContent() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* LEFT 2 COLS: FORM STEPS */}
+          {/* LEFT 2 COLS: 4-STEP FORM */}
           <div className="lg:col-span-2 space-y-6">
-            
-            {/* Customer Auto-Profile Banner */}
-            <div className="rounded-3xl bg-gradient-to-r from-yellow-500/10 via-amber-500/5 to-transparent border border-yellow-500/20 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-2xl bg-yellow-400 text-slate-950 flex items-center justify-center font-black text-lg shadow-md shrink-0">
-                  {(formData.customerName || "U").substring(0, 1).toUpperCase()}
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-yellow-600 dark:text-yellow-400 uppercase tracking-wider">
-                    Booking for Logged-In User
-                  </span>
-                  <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">
-                    {formData.customerName || "User Account"}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
-                    <Phone size={12} className="text-yellow-500" />
-                    +91 {formData.customerPhone || "Registered Phone"}
-                  </p>
-                </div>
-              </div>
 
-              <button
-                type="button"
-                onClick={() => setIsEditingContact(!isEditingContact)}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-yellow-500 transition-colors shrink-0"
-              >
-                <Edit3 size={14} />
-                {isEditingContact ? "Done" : "Change Contact"}
-              </button>
-            </div>
-
-            {/* Optional Contact Edit Section */}
-            <AnimatePresence>
-              {isEditingContact && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="p-6 rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-4 overflow-hidden"
-                >
-                  <p className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">
-                    Update Contact / Book for someone else:
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Name</label>
-                      <input
-                        type="text"
-                        name="customerName"
-                        value={formData.customerName}
-                        onChange={handleInputChange}
-                        className="w-full h-11 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs outline-none focus:border-yellow-400"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Phone</label>
-                      <input
-                        type="tel"
-                        name="customerPhone"
-                        value={formData.customerPhone}
-                        onChange={handleInputChange}
-                        className="w-full h-11 px-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs outline-none focus:border-yellow-400"
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Step 1: Schedule & Address */}
-            <div className="rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-6 sm:p-8 shadow-sm space-y-6">
+            {/* STEP 1: 10-Digit Mobile Number Input */}
+            <div className="rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-6 sm:p-8 shadow-sm space-y-4">
               <div className="flex items-center gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
-                <div className="h-10 w-10 rounded-xl bg-yellow-400/20 text-yellow-600 dark:text-yellow-400 flex items-center justify-center font-bold">
+                <div className="h-10 w-10 rounded-xl bg-yellow-400 text-slate-950 flex items-center justify-center font-black">
                   1
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                    Schedule & Service Address
+                    Enter Mobile Number
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Pick date, time slot & service location</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">10-digit number for order updates & technician contact</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-                    Service Date *
+                    Mobile Number (10 Digits) *
+                  </label>
+                  <div className="relative flex items-center">
+                    <span className="absolute left-4 text-slate-500 dark:text-slate-400 font-bold text-sm">
+                      +91
+                    </span>
+                    <input
+                      type="tel"
+                      name="customerPhone"
+                      maxLength="10"
+                      value={formData.customerPhone}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 7735552029"
+                      className="w-full h-13 pl-14 pr-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-base font-bold text-slate-900 dark:text-white outline-none focus:border-yellow-400 tracking-wider"
+                    />
+                  </div>
+                  {formData.customerPhone.length > 0 && formData.customerPhone.length < 10 && (
+                    <p className="text-[11px] text-amber-500 mt-1 font-semibold">
+                      {10 - formData.customerPhone.length} more digits required
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                    Your Name (Optional)
                   </label>
                   <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input
-                      type="date"
-                      name="date"
-                      value={formData.date}
+                      type="text"
+                      name="customerName"
+                      value={formData.customerName}
                       onChange={handleInputChange}
+                      placeholder="e.g. Rahul Kumar"
                       className="w-full h-13 pl-12 pr-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white outline-none focus:border-yellow-400"
                     />
                   </div>
                 </div>
+              </div>
+            </div>
 
+            {/* STEP 2: Choose Date & Slot */}
+            <div className="rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-6 sm:p-8 shadow-sm space-y-6">
+              <div className="flex items-center gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
+                <div className="h-10 w-10 rounded-xl bg-yellow-400 text-slate-950 flex items-center justify-center font-black">
+                  2
+                </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-                    Preferred Time Slot *
-                  </label>
-                  <div className="relative">
-                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <select
-                      name="timeSlot"
-                      value={formData.timeSlot}
-                      onChange={handleInputChange}
-                      className="w-full h-13 pl-12 pr-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white outline-none focus:border-yellow-400"
-                    >
-                      <option value="09:00 AM - 11:00 AM">09:00 AM - 11:00 AM</option>
-                      <option value="10:00 AM - 12:00 PM">10:00 AM - 12:00 PM</option>
-                      <option value="01:00 PM - 03:00 PM">01:00 PM - 03:00 PM</option>
-                      <option value="04:00 PM - 06:00 PM">04:00 PM - 06:00 PM</option>
-                    </select>
-                  </div>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                    Choose Date & Time Slot
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Select when you want our technician to visit</p>
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-                  Service Address *
+                  Select Date *
+                </label>
+                <div className="relative">
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                  <input
+                    type="date"
+                    name="date"
+                    min={new Date().toISOString().split("T")[0]}
+                    value={formData.date}
+                    onChange={handleInputChange}
+                    className="w-full h-13 pl-12 pr-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-sm font-semibold text-slate-900 dark:text-white outline-none focus:border-yellow-400 cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
+                  Select Time Slot *
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {timeSlots.map((slot) => {
+                    const isSelected = formData.timeSlot === slot;
+                    return (
+                      <button
+                        key={slot}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, timeSlot: slot })}
+                        className={`p-3.5 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all ${
+                          isSelected
+                            ? "bg-yellow-400/15 border-yellow-400 text-yellow-600 dark:text-yellow-400 shadow-sm"
+                            : "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <Clock size={14} className={isSelected ? "text-yellow-500" : "text-slate-400"} />
+                          {slot}
+                        </span>
+                        {isSelected && <Check size={14} className="text-yellow-500" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* STEP 3: Service Address */}
+            <div className="rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-6 sm:p-8 shadow-sm space-y-4">
+              <div className="flex items-center gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
+                <div className="h-10 w-10 rounded-xl bg-yellow-400 text-slate-950 flex items-center justify-center font-black">
+                  3
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                    Service Address
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Enter house/flat number, street and landmark</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                  Full Address *
                 </label>
                 <div className="relative">
                   <MapPin className="absolute left-4 top-4 text-slate-400" size={18} />
@@ -305,115 +343,111 @@ function BookingFormContent() {
                     rows="3"
                     value={formData.address}
                     onChange={handleInputChange}
-                    placeholder="House/Flat No., Building Name, Street, Landmark, City"
+                    placeholder="House/Flat No., Building Name, Street, Landmark, Bramhapur / City"
                     className="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-sm text-slate-900 dark:text-white outline-none focus:border-yellow-400"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Step 2: Payment Mode */}
+            {/* STEP 4: Payment Method (UPI Instant or Pay After Service) */}
             <div className="rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 p-6 sm:p-8 shadow-sm space-y-6">
               <div className="flex items-center gap-3 border-b border-slate-100 dark:border-white/10 pb-4">
-                <div className="h-10 w-10 rounded-xl bg-yellow-400/20 text-yellow-600 dark:text-yellow-400 flex items-center justify-center font-bold">
-                  2
+                <div className="h-10 w-10 rounded-xl bg-yellow-400 text-slate-950 flex items-center justify-center font-black">
+                  4
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                    Payment Mode
+                    Select Payment Method
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Select payment preference</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Choose between instant online payment or pay after service</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[
-                  { id: "upi", label: "UPI Instant", icon: QrCode },
-                  { id: "card", label: "Credit/Debit", icon: CreditCard },
-                  { id: "netbanking", label: "NetBanking", icon: Building },
-                  { id: "cod", label: "Pay After", icon: Banknote },
-                ].map((method) => {
-                  const MethodIcon = method.icon;
-                  const isSelected = formData.paymentMethod === method.id;
-                  return (
-                    <button
-                      key={method.id}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, paymentMethod: method.id })}
-                      className={`p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all ${
-                        isSelected
-                          ? "bg-yellow-400/10 border-yellow-400 text-yellow-600 dark:text-yellow-400 font-bold shadow-md"
-                          : "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400"
-                      }`}
-                    >
-                      <MethodIcon size={22} />
-                      <span className="text-xs">{method.label}</span>
-                    </button>
-                  );
-                })}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* UPI Instant */}
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, paymentMethod: "UPI Instant" })}
+                  className={`p-5 rounded-2xl border flex flex-col items-start gap-3 transition-all text-left relative ${
+                    formData.paymentMethod === "UPI Instant"
+                      ? "bg-yellow-400/10 border-yellow-400 ring-2 ring-yellow-400/20"
+                      : "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-white/10 hover:border-slate-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <div className="h-10 w-10 rounded-xl bg-yellow-400/20 text-yellow-600 dark:text-yellow-400 flex items-center justify-center">
+                      <QrCode size={22} />
+                    </div>
+                    {formData.paymentMethod === "UPI Instant" && (
+                      <span className="h-6 w-6 rounded-full bg-yellow-400 text-slate-950 flex items-center justify-center">
+                        <Check size={14} className="font-bold" />
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-slate-900 dark:text-white">
+                      UPI Instant
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      Pay instantly via Google Pay, PhonePe, Paytm or UPI QR Code
+                    </p>
+                  </div>
+                </button>
+
+                {/* Pay After Service */}
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, paymentMethod: "Pay After Service" })}
+                  className={`p-5 rounded-2xl border flex flex-col items-start gap-3 transition-all text-left relative ${
+                    formData.paymentMethod === "Pay After Service"
+                      ? "bg-yellow-400/10 border-yellow-400 ring-2 ring-yellow-400/20"
+                      : "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-white/10 hover:border-slate-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <div className="h-10 w-10 rounded-xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center">
+                      <Banknote size={22} />
+                    </div>
+                    {formData.paymentMethod === "Pay After Service" && (
+                      <span className="h-6 w-6 rounded-full bg-yellow-400 text-slate-950 flex items-center justify-center">
+                        <Check size={14} className="font-bold" />
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-slate-900 dark:text-white">
+                      Pay After Service
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      Pay cash or UPI directly to technician after job is completed
+                    </p>
+                  </div>
+                </button>
               </div>
 
-              {formData.paymentMethod === "upi" && (
+              {formData.paymentMethod === "UPI Instant" && (
                 <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 space-y-3">
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Enter UPI ID (Google Pay / PhonePe / Paytm)</p>
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Enter your UPI ID (Optional)</p>
                   <input
                     type="text"
                     name="upiId"
                     value={formData.upiId}
                     onChange={handleInputChange}
-                    placeholder="e.g. username@okaxis or mobile@paytm"
+                    placeholder="e.g. mobile@paytm or username@okaxis"
                     className="w-full h-12 px-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/10 text-sm outline-none focus:border-yellow-400"
                   />
-                </div>
-              )}
-
-              {formData.paymentMethod === "card" && (
-                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 space-y-3">
-                  <input
-                    type="text"
-                    name="cardNumber"
-                    value={formData.cardNumber}
-                    onChange={handleInputChange}
-                    placeholder="Card Number (16 digits)"
-                    className="w-full h-12 px-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/10 text-sm outline-none focus:border-yellow-400"
-                  />
-                  <div className="grid grid-cols-2 gap-3">
-                    <input
-                      type="text"
-                      name="cardExpiry"
-                      value={formData.cardExpiry}
-                      onChange={handleInputChange}
-                      placeholder="MM/YY"
-                      className="h-12 px-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/10 text-sm outline-none focus:border-yellow-400"
-                    />
-                    <input
-                      type="password"
-                      name="cardCvv"
-                      maxLength="3"
-                      value={formData.cardCvv}
-                      onChange={handleInputChange}
-                      placeholder="CVV"
-                      className="h-12 px-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/10 text-sm outline-none focus:border-yellow-400"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {formData.paymentMethod === "cod" && (
-                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2">
-                  <CheckCircle2 size={18} />
-                  <span>Pay ₹{totalAmount} via Cash or UPI to the technician after job completion.</span>
                 </div>
               )}
             </div>
 
           </div>
 
-          {/* RIGHT 1 COL: SUMMARY & CHECKOUT */}
+          {/* RIGHT 1 COL: SUMMARY & CHECKOUT BUTTON */}
           <div>
             <div className="sticky top-28 rounded-3xl bg-slate-900 dark:bg-white/[0.03] border border-slate-800 dark:border-white/10 p-6 sm:p-8 text-white space-y-6 shadow-xl">
               <h3 className="text-xl font-bold border-b border-white/10 pb-4">
-                Order Summary
+                Booking Summary
               </h3>
 
               <div className="space-y-3 text-sm text-slate-300">
@@ -435,6 +469,10 @@ function BookingFormContent() {
                     <span className="font-bold">-₹{discountAmount}</span>
                   </div>
                 )}
+                <div className="flex justify-between pt-2 border-t border-white/10 text-xs">
+                  <span className="text-slate-400">Payment Preference:</span>
+                  <span className="font-bold text-yellow-400">{formData.paymentMethod}</span>
+                </div>
               </div>
 
               <div className="pt-4 border-t border-white/10 space-y-2">
@@ -476,14 +514,14 @@ function BookingFormContent() {
                   <div className="h-5 w-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <CreditCard size={20} />
-                    Pay & Confirm Booking
+                    <CheckCircle2 size={20} />
+                    Confirm & Book Now
                   </>
                 )}
               </button>
 
               <p className="text-[11px] text-center text-slate-400">
-                🔒 256-Bit SSL Encrypted & 100% Guaranteed Service
+                🔒 Stores in <span className="text-yellow-400 font-bold">Insta-bookings</span> database collection
               </p>
             </div>
           </div>
@@ -510,7 +548,7 @@ function BookingFormContent() {
                   Booking Confirmed! 🎉
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Saved directly to MongoDB database & sent to Admin Panel
+                  Saved under <span className="font-bold text-yellow-500">Insta-bookings</span> collection in FixItFirst database
                 </p>
               </div>
 
@@ -524,15 +562,19 @@ function BookingFormContent() {
                   <span className="font-bold text-slate-900 dark:text-white">{successBooking.serviceName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Customer Name:</span>
-                  <span className="font-bold text-slate-900 dark:text-white">{successBooking.customerName}</span>
+                  <span className="text-slate-400">Phone Number:</span>
+                  <span className="font-bold text-slate-900 dark:text-white">+91 {successBooking.customerPhone}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">Date & Slot:</span>
                   <span className="font-bold text-slate-900 dark:text-white">{successBooking.date} ({successBooking.timeSlot})</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Amount Paid:</span>
+                  <span className="text-slate-400">Payment Option:</span>
+                  <span className="font-bold text-yellow-500">{successBooking.paymentMethod}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Amount Payable:</span>
                   <span className="font-bold text-emerald-500">₹{successBooking.amount}</span>
                 </div>
               </div>
@@ -541,7 +583,7 @@ function BookingFormContent() {
                 href="/my-bookings"
                 className="block w-full py-4 rounded-2xl bg-yellow-400 text-slate-950 font-black text-sm hover:bg-yellow-300 transition-colors shadow-lg"
               >
-                Go to My Bookings
+                View My Bookings
               </a>
             </motion.div>
           </div>

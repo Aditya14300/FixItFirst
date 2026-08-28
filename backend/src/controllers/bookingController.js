@@ -1,4 +1,5 @@
 const Booking = require("../models/Booking");
+const InstaBooking = require("../models/InstaBooking");
 const Service = require("../models/Service");
 const Category = require("../models/Category");
 const User = require("../models/User");
@@ -31,22 +32,43 @@ const getBookings = async (req, res) => {
 // Create a booking, increment Category bookingCount & update User address
 const createBooking = async (req, res) => {
   try {
-    const { customerName, customerPhone, serviceName, date, timeSlot, address, amount, notes } = req.body;
+    const { customerName, customerPhone, serviceName, date, timeSlot, address, amount, notes, paymentMethod } = req.body;
 
-    if (!customerName || !customerPhone || !serviceName || !date || !timeSlot || !address || !amount) {
+    if (!customerPhone || !serviceName || !date || !timeSlot || !address || !amount) {
       return res.status(400).json({
         success: false,
-        message: "Please provide all required booking fields",
+        message: "Please provide all required booking fields (phone, service, date, timeSlot, address, amount)",
       });
     }
 
-    const cleanCustomerName = String(customerName).trim().substring(0, 50);
+    const cleanCustomerName = customerName ? String(customerName).trim().substring(0, 50) : "Valued Customer";
     const cleanCustomerPhone = String(customerPhone).trim().substring(0, 15);
     const cleanServiceName = String(serviceName).trim().substring(0, 80);
     const cleanAddress = String(address).trim().substring(0, 150);
     const cleanNotes = notes ? String(notes).trim().substring(0, 250) : "";
     const cleanAmount = Number(amount);
+    const cleanPaymentMethod = paymentMethod || (notes && notes.includes("UPI Instant") ? "UPI Instant" : "Pay After Service");
 
+    // 1. Save directly under new collection "Insta-bookings" in FixItFirst database
+    let instaBooking = null;
+    try {
+      instaBooking = await InstaBooking.create({
+        customerName: cleanCustomerName,
+        customerPhone: cleanCustomerPhone,
+        serviceName: cleanServiceName,
+        date,
+        timeSlot,
+        address: cleanAddress,
+        paymentMethod: cleanPaymentMethod,
+        amount: cleanAmount,
+        notes: cleanNotes,
+      });
+      console.log("✅ Booking saved to Insta-bookings collection:", instaBooking._id);
+    } catch (instaErr) {
+      console.error("Insta-bookings collection save error:", instaErr.message);
+    }
+
+    // 2. Save in primary Booking collection for admin & user history sync
     const booking = await Booking.create({
       customerName: cleanCustomerName,
       customerPhone: cleanCustomerPhone,
@@ -55,7 +77,7 @@ const createBooking = async (req, res) => {
       timeSlot,
       address: cleanAddress,
       amount: cleanAmount,
-      notes: cleanNotes,
+      notes: `Payment: ${cleanPaymentMethod} | Notes: ${cleanNotes}`,
     });
 
     // Auto-update customer address column in User collection
