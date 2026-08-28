@@ -6,7 +6,7 @@ import { Star, Quote } from "lucide-react";
 const testimonials = [
   {
     name: "Aarav Sharma",
-    location: "Bhubaneswar",
+    location: "Bramhapur",
     text: "Booked an electrician for full home wiring. The guy was super professional, arrived on time, and cleaned up everything after the job. Best service ever!",
     rating: 5,
     initials: "AS",
@@ -22,7 +22,7 @@ const testimonials = [
   },
   {
     name: "Rohan Dash",
-    location: "Bhubaneswar",
+    location: "Bramhapur",
     text: "The 30-day warranty is real! I had a minor issue with the plumbing work after 2 weeks, and they sent someone to fix it for free the very next day. Highly trusted.",
     rating: 5,
     initials: "RD",

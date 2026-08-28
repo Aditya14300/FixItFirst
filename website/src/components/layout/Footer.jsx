@@ -120,18 +120,18 @@ export default function Footer() {
             <ul className="space-y-5">
               <li className="flex items-start gap-3 text-sm font-medium text-slate-600 dark:text-slate-400">
                 <MapPin size={18} className="text-yellow-500 shrink-0 mt-0.5" />
-                <span>Bhubaneswar, Odisha<br />India</span>
+                <span>Bramhapur, Ganjam, Odisha<br />India</span>
               </li>
               <li className="flex items-center gap-3 text-sm font-medium text-slate-600 dark:text-slate-400">
                 <Mail size={18} className="text-yellow-500 shrink-0" />
-                <a href="mailto:support@fixitfirst.com" className="hover:text-yellow-600 dark:hover:text-yellow-400 transition-colors">
-                  support@fixitfirst.com
+                <a href="mailto:thefixitfirst@gmail.com" className="hover:text-yellow-600 dark:hover:text-yellow-400 transition-colors">
+                  thefixitfirst@gmail.com
                 </a>
               </li>
               <li className="flex items-center gap-3 text-sm font-medium text-slate-600 dark:text-slate-400">
                 <Phone size={18} className="text-yellow-500 shrink-0" />
-                <a href="tel:+919999999999" className="hover:text-yellow-600 dark:hover:text-yellow-400 transition-colors">
-                  +91 99999 99999
+                <a href="tel:+917735552029" className="hover:text-yellow-600 dark:hover:text-yellow-400 transition-colors">
+                  +91 77355 52029
                 </a>
               </li>
             </ul>
