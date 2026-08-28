@@ -22,7 +22,7 @@ import {
   Edit3,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
+import api from "@/app/services/api";
 
 function BookingFormContent() {
   const { user } = useAuth();
@@ -126,7 +126,7 @@ function BookingFormContent() {
 
     try {
       // Save directly to MongoDB Database
-      const res = await axios.post("http://localhost:5000/api/bookings", payload);
+      const res = await api.post("/bookings", payload);
       if (res.data && res.data.booking) {
         setSuccessBooking(res.data.booking);
       } else {

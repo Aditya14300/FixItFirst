@@ -5,7 +5,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/context/AuthContext";
 import { Calendar, Clock, MapPin, CheckCircle2, AlertCircle, RefreshCw, XCircle, Ban } from "lucide-react";
-import axios from "axios";
+import api from "@/app/services/api";
 import toast from "react-hot-toast";
 
 export default function MyBookings() {
@@ -32,10 +32,10 @@ export default function MyBookings() {
     try {
       // Fetch ONLY bookings belonging to this logged in customer's phone number!
       const url = currentUserPhone
-        ? `http://localhost:5000/api/bookings?phone=${currentUserPhone}`
-        : "http://localhost:5000/api/bookings";
+        ? `/bookings?phone=${currentUserPhone}`
+        : "/bookings";
 
-      const res = await axios.get(url);
+      const res = await api.get(url);
       if (res.data && res.data.bookings) {
         setBookings(res.data.bookings);
       }
@@ -55,7 +55,7 @@ export default function MyBookings() {
     setCancellingId(bookingId);
     try {
       // Call MongoDB cancel endpoint
-      await axios.put(`http://localhost:5000/api/bookings/${bookingId}/cancel`);
+      await api.put(`/bookings/${bookingId}/cancel`);
       toast.success("Booking cancelled successfully!");
       setBookings((prev) =>
         prev.map((b) => (b._id === bookingId ? { ...b, status: "cancelled" } : b))
