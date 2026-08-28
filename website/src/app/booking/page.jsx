@@ -161,6 +161,11 @@ function BookingFormContent() {
     };
 
     try {
+      // Save phone number locally so My Bookings page filters strictly for this customer
+      if (typeof window !== "undefined") {
+        localStorage.setItem("lastBookedPhone", formData.customerPhone);
+      }
+
       // Save directly to MongoDB Database under "Insta-bookings" collection!
       const res = await api.post("/bookings", payload);
       if (res.data && (res.data.booking || res.data.instaBooking)) {

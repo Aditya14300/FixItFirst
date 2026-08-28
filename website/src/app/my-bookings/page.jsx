@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/context/AuthContext";
-import { Calendar, Clock, MapPin, CheckCircle2, AlertCircle, RefreshCw, XCircle, Ban } from "lucide-react";
+import { Calendar, Clock, MapPin, CheckCircle2, AlertCircle, RefreshCw, Phone, Search } from "lucide-react";
 import api from "@/app/services/api";
 import toast from "react-hot-toast";
 
@@ -14,30 +14,41 @@ export default function MyBookings() {
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState(null);
   const [filter, setFilter] = useState("all"); // all, active, completed, cancelled
+  const [phoneInput, setPhoneInput] = useState("");
+  const [activePhone, setActivePhone] = useState("");
 
   const fetchUserBookings = useCallback(async () => {
     setLoading(true);
-    let currentUserPhone = user?.phone;
+    let currentUserPhone = activePhone || user?.phone;
 
     if (!currentUserPhone && typeof window !== "undefined") {
       try {
         const savedUser = localStorage.getItem("user");
         if (savedUser) {
           const parsed = JSON.parse(savedUser);
-          currentUserPhone = parsed.phone;
+          if (parsed.phone) currentUserPhone = parsed.phone;
+        }
+        if (!currentUserPhone) {
+          currentUserPhone = localStorage.getItem("lastBookedPhone") || "";
         }
       } catch (err) {}
     }
 
-    try {
-      // Fetch ONLY bookings belonging to this logged in customer's phone number!
-      const url = currentUserPhone
-        ? `/bookings?phone=${currentUserPhone}`
-        : "/bookings";
+    if (!currentUserPhone) {
+      setBookings([]);
+      setLoading(false);
+      return;
+    }
 
-      const res = await api.get(url);
+    setActivePhone(currentUserPhone);
+
+    try {
+      // Fetch ONLY bookings belonging strictly to this customer's phone number!
+      const res = await api.get(`/bookings?phone=${encodeURIComponent(currentUserPhone)}`);
       if (res.data && res.data.bookings) {
         setBookings(res.data.bookings);
+      } else {
+        setBookings([]);
       }
     } catch (err) {
       console.warn("Failed to fetch bookings:", err.message);
@@ -45,11 +56,24 @@ export default function MyBookings() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, activePhone]);
 
   useEffect(() => {
     fetchUserBookings();
   }, [fetchUserBookings]);
+
+  const handlePhoneSearch = (e) => {
+    e.preventDefault();
+    const cleanPhone = phoneInput.replace(/\D/g, "").slice(0, 10);
+    if (cleanPhone.length !== 10) {
+      toast.error("Please enter a valid 10-digit mobile number");
+      return;
+    }
+    if (typeof window !== "undefined") {
+      localStorage.setItem("lastBookedPhone", cleanPhone);
+    }
+    setActivePhone(cleanPhone);
+  };
 
   const handleCancelBooking = async (bookingId) => {
     setCancellingId(bookingId);
@@ -89,57 +113,125 @@ export default function MyBookings() {
                 My Bookings
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Manage your scheduled repairs & order history
+                {activePhone ? (
+                  <span className="flex items-center gap-1">
+                    Showing bookings for <span className="font-bold text-yellow-500">+91 {activePhone}</span>
+                  </span>
+                ) : (
+                  "Manage your scheduled repairs & order history"
+                )}
               </p>
             </div>
             
-            <div className="flex items-center gap-3">
-              {/* Filter Pills */}
-              <div className="flex bg-slate-200 dark:bg-slate-900 p-1 rounded-xl text-xs font-bold">
-                {["all", "active", "completed", "cancelled"].map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    className={`px-3 py-1.5 rounded-lg capitalize transition-all ${
-                      filter === f
-                        ? "bg-yellow-400 text-slate-950 shadow"
-                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
-                  >
-                    {f}
-                  </button>
-                ))}
+            {activePhone && (
+              <div className="flex items-center gap-3">
+                {/* Filter Pills */}
+                <div className="flex bg-slate-200 dark:bg-slate-900 p-1 rounded-xl text-xs font-bold">
+                  {["all", "active", "completed", "cancelled"].map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setFilter(f)}
+                      className={`px-3 py-1.5 rounded-lg capitalize transition-all ${
+                        filter === f
+                          ? "bg-yellow-400 text-slate-950 shadow"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={fetchUserBookings}
+                  className="p-2.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:text-yellow-500 transition-colors shadow-sm"
+                  title="Refresh Bookings"
+                >
+                  <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Search Phone Banner if no activePhone or to switch phone */}
+          {!activePhone && !loading && (
+            <div className="p-8 sm:p-10 rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-center space-y-6 shadow-sm mb-8">
+              <div className="h-16 w-16 bg-yellow-400/10 text-yellow-500 rounded-full flex items-center justify-center mx-auto border border-yellow-400/20">
+                <Phone size={28} />
+              </div>
+              <div className="max-w-md mx-auto space-y-2">
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white">
+                  Find Your Bookings
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Enter your 10-digit mobile number used during booking to view your scheduled services.
+                </p>
               </div>
 
-              <button
-                onClick={fetchUserBookings}
-                className="p-2.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:text-yellow-500 transition-colors shadow-sm"
-                title="Refresh Bookings"
-              >
-                <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
-              </button>
+              <form onSubmit={handlePhoneSearch} className="max-w-md mx-auto flex gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">
+                    +91
+                  </span>
+                  <input
+                    type="tel"
+                    maxLength="10"
+                    value={phoneInput}
+                    onChange={(e) => setPhoneInput(e.target.value)}
+                    placeholder="Enter 10-digit number"
+                    className="w-full h-12 pl-12 pr-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-yellow-400"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="px-6 h-12 rounded-2xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold text-xs flex items-center gap-2 transition-colors shadow-md shrink-0"
+                >
+                  <Search size={16} />
+                  View Bookings
+                </button>
+              </form>
             </div>
-          </div>
+          )}
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 space-y-4">
               <div className="h-8 w-8 border-3 border-yellow-400 border-t-transparent rounded-full animate-spin" />
               <p className="text-xs text-slate-500">Fetching your personal bookings...</p>
             </div>
-          ) : filteredBookings.length === 0 ? (
+          ) : activePhone && filteredBookings.length === 0 ? (
             <div className="p-12 rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-center space-y-4 shadow-sm">
               <AlertCircle size={48} className="mx-auto text-slate-400" />
               <h3 className="text-xl font-bold text-slate-900 dark:text-white">No Bookings Found</h3>
-              <p className="text-xs text-slate-500">You don't have any bookings matching this filter.</p>
-              <a
-                href="/booking"
-                className="inline-block px-6 py-3 rounded-2xl bg-yellow-400 text-slate-950 font-bold text-xs hover:bg-yellow-300 transition-colors shadow-md"
-              >
-                Book Service Now
-              </a>
+              <p className="text-xs text-slate-500">
+                No bookings found for <span className="font-bold text-yellow-500">+91 {activePhone}</span>.
+              </p>
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <button
+                  onClick={() => setActivePhone("")}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-200"
+                >
+                  Change Phone Number
+                </button>
+                <a
+                  href="/booking"
+                  className="px-6 py-2.5 rounded-xl bg-yellow-400 text-slate-950 font-bold text-xs hover:bg-yellow-300 transition-colors shadow-md"
+                >
+                  Book Service Now
+                </a>
+              </div>
             </div>
-          ) : (
+          ) : activePhone && (
             <div className="space-y-4">
+              <div className="flex items-center justify-between px-2 text-xs text-slate-500">
+                <span>Total Bookings: <b>{filteredBookings.length}</b></span>
+                <button
+                  onClick={() => setActivePhone("")}
+                  className="text-yellow-500 font-bold hover:underline"
+                >
+                  Change Number (+91 {activePhone})
+                </button>
+              </div>
+
               {filteredBookings.map((booking) => (
                 <div
                   key={booking._id}
@@ -178,32 +270,24 @@ export default function MyBookings() {
                       </div>
                       <div className="flex items-center gap-1">
                         <MapPin size={14} className="text-yellow-500" />
-                        <span className="line-clamp-1 max-w-xs">{booking.address}</span>
+                        {booking.address}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-white/10 shrink-0 gap-3">
-                    <div>
-                      <p className="text-[10px] text-slate-400 sm:text-right">Total Amount</p>
-                      <p className="text-2xl font-black text-slate-900 dark:text-white">
-                        ₹{booking.amount}
-                      </p>
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between gap-3 pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-white/5">
+                    <div className="text-left sm:text-right">
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Amount</p>
+                      <p className="text-2xl font-black text-yellow-500">₹{booking.amount}</p>
                     </div>
 
-                    {/* Cancel Booking Action */}
-                    {(booking.status === "pending" || booking.status === "confirmed") && (
+                    {booking.status !== "cancelled" && booking.status !== "completed" && (
                       <button
-                        onClick={() => handleCancelBooking(booking._id)}
-                        disabled={cancellingId === booking._id}
-                        className="px-3.5 py-1.5 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                        onClick={() => handleCancelBooking(booking.bookingId || booking._id)}
+                        disabled={cancellingId === (booking.bookingId || booking._id)}
+                        className="px-4 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-500 text-xs font-bold transition-colors disabled:opacity-50"
                       >
-                        {cancellingId === booking._id ? (
-                          <div className="h-3.5 w-3.5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <Ban size={14} />
-                        )}
-                        Cancel Order
+                        {cancellingId === (booking.bookingId || booking._id) ? "Cancelling..." : "Cancel Booking"}
                       </button>
                     )}
                   </div>

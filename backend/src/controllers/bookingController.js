@@ -4,22 +4,57 @@ const Service = require("../models/Service");
 const Category = require("../models/Category");
 const User = require("../models/User");
 
-// Get bookings (filtered by customerPhone query if provided, or all for admin)
+// Get bookings (filtered strictly by customerPhone query parameter)
 const getBookings = async (req, res) => {
   try {
-    const { phone, customerPhone } = req.query;
-    let query = {};
+    const { phone, customerPhone, all } = req.query;
     const targetPhone = phone || customerPhone;
+    let query = {};
 
     if (targetPhone) {
-      query.customerPhone = targetPhone;
+      query.customerPhone = String(targetPhone).trim();
+    } else if (all !== "true") {
+      // Security fix: If no phone parameter provided, return empty array to prevent leaking all database bookings!
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        bookings: [],
+      });
     }
 
     const bookings = await Booking.find(query).sort({ createdAt: -1 });
+    const instaBookings = await InstaBooking.find(query).sort({ createdAt: -1 });
+
+    // Combine and deduplicate bookings
+    const combined = [...bookings];
+    const existingIds = new Set(combined.map((b) => b._id.toString()));
+    
+    for (const ib of instaBookings) {
+      if (!existingIds.has(ib._id.toString())) {
+        combined.push({
+          _id: ib._id,
+          customerName: ib.customerName,
+          customerPhone: ib.customerPhone,
+          serviceName: ib.serviceName,
+          date: ib.date,
+          timeSlot: ib.timeSlot,
+          address: ib.address,
+          amount: ib.amount,
+          status: ib.status,
+          notes: `Payment: ${ib.paymentMethod}`,
+          createdAt: ib.createdAt,
+        });
+        existingIds.add(ib._id.toString());
+      }
+    }
+
+    // Sort by newest first
+    combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
     res.status(200).json({
       success: true,
-      count: bookings.length,
-      bookings,
+      count: combined.length,
+      bookings: combined,
     });
   } catch (error) {
     res.status(500).json({
