@@ -27,6 +27,9 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/staff", staffRoutes);
 
+app.get("/health", (req, res) => res.status(200).send("OK"));
+app.get("/api/health", (req, res) => res.status(200).send("OK"));
+
 app.get("/", (req, res) => {
     res.json({
         success: true,
