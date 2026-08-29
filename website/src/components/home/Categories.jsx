@@ -245,59 +245,46 @@ export default function Categories() {
         {loading ? (
           <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
             {[1, 2, 3, 4, 5, 6, 7].map((idx) => (
-              <div key={idx} className="flex-shrink-0 w-44 h-56 rounded-3xl bg-slate-200 dark:bg-white/5 animate-pulse" />
+              <div key={idx} className="flex-shrink-0 w-32 sm:w-40 md:w-48 aspect-square rounded-3xl bg-slate-200 dark:bg-white/5 animate-pulse" />
             ))}
           </div>
         ) : (
           <div
             ref={scrollContainerRef}
-            className="flex items-stretch gap-4 sm:gap-6 overflow-x-auto pb-6 pt-2 snap-x snap-mandatory scroll-smooth hide-scrollbar px-1 -mx-2 sm:mx-0"
+            className="flex items-center gap-4 sm:gap-6 overflow-x-auto pb-6 pt-2 snap-x snap-mandatory scroll-smooth hide-scrollbar px-1 -mx-2 sm:mx-0"
           >
             {categories.map((cat, index) => {
               const customImg = getCategoryCustomImage(cat);
               const IconComp = getCategoryIcon(cat);
               const preset = categoryStylePresets[index % categoryStylePresets.length];
-              const childCount = getChildServices(cat).length;
 
               return (
                 <Link
                   key={cat._id || index}
                   href={`/services?category=${encodeURIComponent(cat.name)}`}
-                  className="flex-shrink-0 w-36 sm:w-44 md:w-52 snap-start group cursor-pointer outline-none"
+                  title={cat.name}
+                  className="flex-shrink-0 w-32 sm:w-40 md:w-48 aspect-square snap-start group cursor-pointer outline-none"
                 >
-                  <div className={`relative h-full flex flex-col items-center justify-between p-4 sm:p-6 rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl dark:group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.6)] ${preset.hoverBorder}`}>
+                  <div className={`relative w-full h-full flex flex-col items-center justify-center p-3 sm:p-5 rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 shadow-sm transition-all duration-300 group-hover:-translate-y-1.5 group-hover:shadow-2xl dark:group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.6)] backdrop-blur-md overflow-hidden ${preset.hoverBorder}`}>
                     
-                    {/* Badge */}
-                    {childCount > 0 && (
-                      <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-black bg-yellow-400 text-slate-950 shadow-sm">
-                        {childCount} Services
-                      </span>
-                    )}
-
-                    {/* Icon Container */}
-                    <div className={`mt-2 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl ${preset.bgColor} border border-slate-200/50 dark:border-white/10 group-hover:scale-110 transition-transform duration-300 backdrop-blur-md overflow-hidden p-2`}>
+                    {/* Centered Icon/Image fitting 1:1 Card */}
+                    <div className="w-full h-full flex items-center justify-center p-1 sm:p-2">
                       {customImg ? (
-                        <img src={customImg} alt={cat.name} className="h-full w-full object-contain drop-shadow-sm" />
+                        <img
+                          src={customImg}
+                          alt={cat.name}
+                          className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-md"
+                        />
                       ) : (
-                        <IconComp size={28} className={preset.color} />
+                        <IconComp size={48} className={`${preset.color} transition-transform duration-300 group-hover:scale-110 sm:w-16 sm:h-16 md:w-20 md:h-20`} />
                       )}
                     </div>
 
-                    {/* Content Info */}
-                    <div className="mt-4 text-center w-full">
-                      <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors">
-                        {cat.name}
-                      </h3>
-                      <p className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400 line-clamp-1">
-                        {cat.description || "Verified Home Services"}
-                      </p>
+                    {/* Subtle Category Name Label on Hover */}
+                    <div className="absolute bottom-2 left-2 right-2 px-2 py-1 rounded-xl bg-slate-900/80 dark:bg-white/90 text-white dark:text-slate-950 text-[11px] font-black text-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 truncate">
+                      {cat.name}
                     </div>
 
-                    {/* Card Action Link */}
-                    <div className="mt-4 pt-3 w-full border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:text-yellow-500 transition-colors">
-                      <span>Explore</span>
-                      <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform text-yellow-500" />
-                    </div>
                   </div>
                 </Link>
               );
