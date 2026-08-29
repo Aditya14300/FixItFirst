@@ -100,26 +100,42 @@ function ServicesContent() {
             
             {/* LEFT SIDEBAR: Categories */}
             <div className="w-full lg:w-64 shrink-0">
-              <div className="sticky top-28">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Categories</h3>
+              <div className="sticky top-24 lg:top-28 z-20 bg-slate-50/90 dark:bg-[#030712]/90 backdrop-blur-md lg:bg-transparent py-2 lg:py-0">
+                <div className="flex items-center justify-between mb-3 lg:mb-4">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Categories</h3>
+                  <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400 lg:hidden">
+                    Swipe horizontal →
+                  </span>
+                </div>
                 
-                <div className="flex lg:flex-col gap-2 overflow-x-auto pb-4 lg:pb-0 hide-scrollbar">
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => {
-                        setActiveCategory(category);
-                        setSearchTerm("");
-                      }}
-                      className={`flex items-center px-4 py-3 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 ${
-                        activeCategory === category
-                          ? "bg-yellow-400/10 text-yellow-600 dark:text-yellow-400 border border-yellow-400/30"
-                          : "bg-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 border border-transparent"
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
+                <div className="flex lg:flex-col gap-2.5 overflow-x-auto pb-3 lg:pb-0 hide-scrollbar snap-x snap-mandatory">
+                  {categories.map((category) => {
+                    const catLower = category.toLowerCase();
+                    let IconComp = Settings;
+                    if (catLower.includes("all")) IconComp = Settings;
+                    else if (catLower.includes("ac") || catLower.includes("snow")) IconComp = Star;
+                    else if (catLower.includes("electric") || catLower.includes("zap")) IconComp = Star;
+                    else if (catLower.includes("plumb") || catLower.includes("wrench")) IconComp = Star;
+
+                    const isActive = activeCategory === category;
+
+                    return (
+                      <button
+                        key={category}
+                        onClick={() => {
+                          setActiveCategory(category);
+                          setSearchTerm("");
+                        }}
+                        className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap snap-start transition-all duration-300 border shrink-0 ${
+                          isActive
+                            ? "bg-yellow-400 text-slate-950 border-yellow-400 shadow-md shadow-yellow-400/20"
+                            : "bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-yellow-400/50"
+                        }`}
+                      >
+                        <span>{category}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>

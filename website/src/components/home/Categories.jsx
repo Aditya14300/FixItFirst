@@ -49,8 +49,17 @@ const categoryStylePresets = [
   { color: "text-purple-500", bgColor: "bg-purple-500/10", hoverBorder: "group-hover:border-purple-500/50" },
 ];
 
+const fallbackCategories = [
+  { _id: "cat-1", name: "AC Repair", icon: "snowflake", description: "AC Service, Installation & Gas Refill" },
+  { _id: "cat-2", name: "Electrician", icon: "zap", description: "Wiring, Switchboard & Appliance Repair" },
+  { _id: "cat-3", name: "Plumbing", icon: "wrench", description: "Pipe Leakage, Tap Fitting & Drainage" },
+  { _id: "cat-4", name: "Cleaning", icon: "sparkles", description: "Full Home Deep Cleaning & Sanitization" },
+  { _id: "cat-5", name: "Carpentry", icon: "hammer", description: "Furniture Repair & Custom Woodwork" },
+  { _id: "cat-6", name: "Painting", icon: "paintbrush", description: "Home Painting & Waterproofing" },
+];
+
 export default function Categories() {
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(fallbackCategories);
   const [allServices, setAllServices] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -63,8 +72,10 @@ export default function Categories() {
           getServices(),
         ]);
 
-        if (catRes && catRes.success && Array.isArray(catRes.categories)) {
+        if (catRes && catRes.success && Array.isArray(catRes.categories) && catRes.categories.length > 0) {
           setCategories(catRes.categories);
+        } else {
+          setCategories(fallbackCategories);
         }
 
         if (srvRes && srvRes.success && Array.isArray(srvRes.services)) {
@@ -72,6 +83,7 @@ export default function Categories() {
         }
       } catch (err) {
         console.error("Error fetching data from database:", err);
+        setCategories(fallbackCategories);
       } finally {
         setLoading(false);
       }
@@ -171,77 +183,144 @@ export default function Categories() {
 
         {/* Dynamic Database Parent Categories Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-            {[1, 2, 3, 4, 5, 6].map((idx) => (
-              <div key={idx} className="h-48 rounded-3xl bg-slate-200 dark:bg-white/5 animate-pulse" />
-            ))}
+          <div>
+            {/* Mobile Loading Skeleton */}
+            <div className="flex gap-4 overflow-x-auto pb-4 md:hidden hide-scrollbar">
+              {[1, 2, 3, 4, 5, 6].map((idx) => (
+                <div key={idx} className="flex-shrink-0 flex flex-col items-center gap-2">
+                  <div className="h-16 w-16 rounded-2xl bg-slate-200 dark:bg-white/5 animate-pulse" />
+                  <div className="h-3 w-14 rounded bg-slate-200 dark:bg-white/5 animate-pulse" />
+                </div>
+              ))}
+            </div>
+            {/* Desktop Loading Skeleton */}
+            <div className="hidden md:grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+              {[1, 2, 3, 4, 5, 6].map((idx) => (
+                <div key={idx} className="h-48 rounded-3xl bg-slate-200 dark:bg-white/5 animate-pulse" />
+              ))}
+            </div>
           </div>
         ) : (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: "-100px" }}
-            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6"
-          >
-            {categories.map((cat, index) => {
-              const IconComp = getCategoryIcon(cat);
-              const preset = categoryStylePresets[index % categoryStylePresets.length];
-              const bgImgUrl = cat.img || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800";
-              const childCount = getChildServices(cat).length;
+          <>
+            {/* MOBILE VIEW: Horizontally Scrollable Icon Format (< md / Mobile Screens) */}
+            <div className="block md:hidden relative">
+              <div className="flex items-center justify-between mb-4 px-1">
+                <div>
+                  <span className="text-xs font-black uppercase tracking-wider text-yellow-600 dark:text-yellow-400 flex items-center gap-1.5">
+                    <Layers size={14} /> Categories
+                  </span>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight mt-0.5">
+                    Select a Category
+                  </h3>
+                </div>
+                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1 bg-slate-100 dark:bg-white/5 px-2.5 py-1 rounded-full border border-slate-200 dark:border-white/10">
+                  Swipe horizontal <ArrowRight size={12} />
+                </span>
+              </div>
 
-              return (
-                <motion.div key={cat._id || index} variants={cardVariants}>
-                  <div
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 p-6 shadow-sm transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-2xl dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.6)] ${preset.hoverBorder}`}
-                  >
-                    {/* Background Image Layer & Dark/Light Gradient Overlay */}
-                    <div className="absolute inset-0 z-0 overflow-hidden">
-                      <img
-                        src={bgImgUrl}
-                        alt={cat.name}
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-35 dark:opacity-25"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/95 via-white/85 to-white/90 dark:from-[#030712]/95 dark:via-[#030712]/90 dark:to-[#030712]/95 backdrop-blur-[2px] transition-colors duration-300" />
-                    </div>
+              <div className="flex items-start gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory scroll-smooth hide-scrollbar px-1 -mx-2">
+                {categories.map((cat, index) => {
+                  const IconComp = getCategoryIcon(cat);
+                  const preset = categoryStylePresets[index % categoryStylePresets.length];
+                  const childCount = getChildServices(cat).length;
+                  const isSelected = selectedCategory?._id === cat._id;
 
-                    {/* Card Content (Relative Z-10) */}
-                    <div className="relative z-10 flex flex-col h-full">
-                      <div className="flex items-center justify-between mb-4">
-                        {/* Icon Wrapper */}
-                        <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${preset.bgColor} transition-transform duration-300 group-hover:scale-110 backdrop-blur-md border border-slate-200/50 dark:border-white/10`}>
-                          <IconComp size={26} className={preset.color} />
-                        </div>
-
-                        {/* Child Service Count Badge */}
-                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-yellow-400/10 text-yellow-600 dark:text-yellow-400 border border-yellow-400/30 backdrop-blur-md">
-                          {childCount > 0 ? `${childCount} Services` : "Explore Services"}
-                        </span>
+                  return (
+                    <motion.button
+                      key={cat._id || index}
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => setSelectedCategory(cat)}
+                      className="flex flex-col items-center flex-shrink-0 w-22 snap-start group cursor-pointer text-center outline-none"
+                    >
+                      {/* Icon Pill Box */}
+                      <div className={`relative flex h-16 w-16 items-center justify-center rounded-2xl ${preset.bgColor} border ${isSelected ? "border-yellow-400 ring-2 ring-yellow-400/40" : "border-slate-200/80 dark:border-white/10"} shadow-md transition-all duration-300 group-hover:scale-105 backdrop-blur-md ${preset.hoverBorder}`}>
+                        <IconComp size={26} className={preset.color} />
+                        
+                        {/* Child count badge */}
+                        {childCount > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-yellow-400 text-slate-950 font-black text-[10px] shadow-md border border-yellow-300">
+                            {childCount}
+                          </span>
+                        )}
                       </div>
 
-                      <h3 className="mb-2 text-xl font-bold text-slate-900 dark:text-white transition-colors group-hover:text-yellow-600 dark:group-hover:text-yellow-400">
+                      {/* Category Label */}
+                      <span className="mt-2 text-xs font-bold text-slate-900 dark:text-white line-clamp-2 leading-tight group-hover:text-yellow-500 transition-colors max-w-[80px]">
                         {cat.name}
-                      </h3>
-                      
-                      <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6 font-medium line-clamp-2">
-                        {cat.description || "Professional service delivered at your home."}
-                      </p>
+                      </span>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
 
-                      {/* Action Link */}
-                      <div className="mt-auto flex items-center justify-between text-sm font-bold text-slate-900 dark:text-white pt-2 border-t border-slate-200/60 dark:border-white/10">
-                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Click to view options</span>
-                        <div className="flex items-center gap-1 text-yellow-500 group-hover:translate-x-1 transition-transform">
-                          <span>Select</span>
-                          <ChevronRight size={16} />
+            {/* DESKTOP & TABLET VIEW: Multi-Column Grid Layout (>= md) */}
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-100px" }}
+              className="hidden md:grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6"
+            >
+              {categories.map((cat, index) => {
+                const IconComp = getCategoryIcon(cat);
+                const preset = categoryStylePresets[index % categoryStylePresets.length];
+                const bgImgUrl = cat.img || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800";
+                const childCount = getChildServices(cat).length;
+
+                return (
+                  <motion.div key={cat._id || index} variants={cardVariants}>
+                    <div
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 p-6 shadow-sm transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-2xl dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.6)] ${preset.hoverBorder}`}
+                    >
+                      {/* Background Image Layer & Dark/Light Gradient Overlay */}
+                      <div className="absolute inset-0 z-0 overflow-hidden">
+                        <img
+                          src={bgImgUrl}
+                          alt={cat.name}
+                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-35 dark:opacity-25"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/95 via-white/85 to-white/90 dark:from-[#030712]/95 dark:via-[#030712]/90 dark:to-[#030712]/95 backdrop-blur-[2px] transition-colors duration-300" />
+                      </div>
+
+                      {/* Card Content (Relative Z-10) */}
+                      <div className="relative z-10 flex flex-col h-full">
+                        <div className="flex items-center justify-between mb-4">
+                          {/* Icon Wrapper */}
+                          <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${preset.bgColor} transition-transform duration-300 group-hover:scale-110 backdrop-blur-md border border-slate-200/50 dark:border-white/10`}>
+                            <IconComp size={26} className={preset.color} />
+                          </div>
+
+                          {/* Child Service Count Badge */}
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-yellow-400/10 text-yellow-600 dark:text-yellow-400 border border-yellow-400/30 backdrop-blur-md">
+                            {childCount > 0 ? `${childCount} Services` : "Explore Services"}
+                          </span>
+                        </div>
+
+                        <h3 className="mb-2 text-xl font-bold text-slate-900 dark:text-white transition-colors group-hover:text-yellow-600 dark:group-hover:text-yellow-400">
+                          {cat.name}
+                        </h3>
+                        
+                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6 font-medium line-clamp-2">
+                          {cat.description || "Professional service delivered at your home."}
+                        </p>
+
+                        {/* Action Link */}
+                        <div className="mt-auto flex items-center justify-between text-sm font-bold text-slate-900 dark:text-white pt-2 border-t border-slate-200/60 dark:border-white/10">
+                          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Click to view options</span>
+                          <div className="flex items-center gap-1 text-yellow-500 group-hover:translate-x-1 transition-transform">
+                            <span>Select</span>
+                            <ChevronRight size={16} />
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          </>
         )}
 
         {/* CHILD SERVICES POPUP MODAL */}
