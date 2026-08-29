@@ -92,6 +92,16 @@ const fallbackCategories = [
   { _id: "cat-11", name: "Painting", icon: "paintbrush", description: "Home Painting & Waterproofing" },
 ];
 
+const AC_ICON_URL = "https://res.cloudinary.com/dmsgeia9g/image/upload/v1788029846/Untitled_design_9_cx7odb.png";
+
+const getCategoryCustomImage = (cat) => {
+  const nameOrIcon = (typeof cat === "string" ? cat : (cat?.icon || cat?.name || "")).toLowerCase();
+  if (nameOrIcon.includes("ac") || nameOrIcon.includes("air") || nameOrIcon.includes("condition")) {
+    return AC_ICON_URL;
+  }
+  return null;
+};
+
 export default function Categories() {
   const [categories, setCategories] = useState(fallbackCategories);
   const [allServices, setAllServices] = useState([]);
@@ -244,6 +254,7 @@ export default function Categories() {
             className="flex items-stretch gap-4 sm:gap-6 overflow-x-auto pb-6 pt-2 snap-x snap-mandatory scroll-smooth hide-scrollbar px-1 -mx-2 sm:mx-0"
           >
             {categories.map((cat, index) => {
+              const customImg = getCategoryCustomImage(cat);
               const IconComp = getCategoryIcon(cat);
               const preset = categoryStylePresets[index % categoryStylePresets.length];
               const childCount = getChildServices(cat).length;
@@ -264,8 +275,12 @@ export default function Categories() {
                     )}
 
                     {/* Icon Container */}
-                    <div className={`mt-2 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl ${preset.bgColor} border border-slate-200/50 dark:border-white/10 group-hover:scale-110 transition-transform duration-300 backdrop-blur-md`}>
-                      <IconComp size={28} className={preset.color} />
+                    <div className={`mt-2 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl ${preset.bgColor} border border-slate-200/50 dark:border-white/10 group-hover:scale-110 transition-transform duration-300 backdrop-blur-md overflow-hidden p-2`}>
+                      {customImg ? (
+                        <img src={customImg} alt={cat.name} className="h-full w-full object-contain drop-shadow-sm" />
+                      ) : (
+                        <IconComp size={28} className={preset.color} />
+                      )}
                     </div>
 
                     {/* Content Info */}
