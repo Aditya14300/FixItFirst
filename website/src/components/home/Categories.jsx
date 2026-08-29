@@ -203,14 +203,14 @@ export default function Categories() {
 
   const getCategoryIcon = (cat) => {
     const iconKey = (cat.icon || cat.name || "").toLowerCase();
-    if (iconKey.includes("refrig") || iconKey.includes("fridge")) return Refrigerator;
+    if (iconKey.includes("refrig") || iconKey.includes("fridge") || iconKey.includes("kitchen_rounded")) return Refrigerator;
     if (iconKey.includes("water") || iconKey.includes("purifi") || iconKey.includes("ro ")) return Droplets;
-    if (iconKey.includes("chimney") || iconKey.includes("exhaust")) return Flame;
-    if (iconKey.includes("wash") || iconKey.includes("laundry")) return WashingMachine;
-    if (iconKey.includes("cctv") || iconKey.includes("camera") || iconKey.includes("security")) return Cctv;
-    if (iconKey.includes("electric") || iconKey.includes("light") || iconKey.includes("bulb") || iconKey.includes("zap") || iconKey.includes("wiring")) return Lightbulb;
-    if (iconKey.includes("ac") || iconKey.includes("air") || iconKey.includes("condition") || iconKey.includes("snow") || iconKey.includes("cool")) return AirVent;
-    if (iconKey.includes("wrench") || iconKey.includes("plumb")) return Wrench;
+    if (iconKey.includes("chimney") || iconKey.includes("exhaust") || iconKey.includes("soup_kitchen_rounded")) return Flame;
+    if (iconKey.includes("wash") || iconKey.includes("laundry") || iconKey.includes("local_laundry_service_rounded")) return WashingMachine;
+    if (iconKey.includes("cctv") || iconKey.includes("camera") || iconKey.includes("security") || iconKey.includes("videocam_rounded")) return Cctv;
+    if (iconKey.includes("electric") || iconKey.includes("light") || iconKey.includes("bulb") || iconKey.includes("zap") || iconKey.includes("wiring") || iconKey.includes("electrical_services_rounded")) return Lightbulb;
+    if (iconKey.includes("ac") || iconKey.includes("air") || iconKey.includes("condition") || iconKey.includes("snow") || iconKey.includes("cool") || iconKey.includes("ac_unit_rounded")) return AirVent;
+    if (iconKey.includes("wrench") || iconKey.includes("plumb") || iconKey.includes("home_repair_service_rounded")) return Wrench;
     if (iconKey.includes("droplet") || iconKey.includes("geyser")) return Droplets;
     if (iconKey.includes("shield")) return Shield;
     if (iconKey.includes("wifi") || iconKey.includes("router")) return Wifi;

@@ -48,14 +48,14 @@ const sortCategoriesWithCustomOrder = (catList) => {
 
 const getCategoryIcon = (categoryName) => {
   const catLower = (categoryName || "").toLowerCase();
-  if (catLower.includes("refrig") || catLower.includes("fridge")) return Refrigerator;
+  if (catLower.includes("refrig") || catLower.includes("fridge") || catLower.includes("kitchen_rounded")) return Refrigerator;
   if (catLower.includes("water") || catLower.includes("purifi") || catLower.includes("ro ")) return Droplets;
-  if (catLower.includes("chimney") || catLower.includes("exhaust")) return Flame;
-  if (catLower.includes("wash") || catLower.includes("laundry")) return WashingMachine;
-  if (catLower.includes("cctv") || catLower.includes("camera") || catLower.includes("security")) return Cctv;
-  if (catLower.includes("electric") || catLower.includes("light") || catLower.includes("bulb") || catLower.includes("zap") || catLower.includes("wiring")) return Lightbulb;
-  if (catLower.includes("ac") || catLower.includes("air") || catLower.includes("condition") || catLower.includes("snow")) return AirVent;
-  if (catLower.includes("plumb") || catLower.includes("wrench")) return Wrench;
+  if (catLower.includes("chimney") || catLower.includes("exhaust") || catLower.includes("soup_kitchen_rounded")) return Flame;
+  if (catLower.includes("wash") || catLower.includes("laundry") || catLower.includes("local_laundry_service_rounded")) return WashingMachine;
+  if (catLower.includes("cctv") || catLower.includes("camera") || catLower.includes("security") || catLower.includes("videocam_rounded")) return Cctv;
+  if (catLower.includes("electric") || catLower.includes("light") || catLower.includes("bulb") || catLower.includes("zap") || catLower.includes("wiring") || catLower.includes("electrical_services_rounded")) return Lightbulb;
+  if (catLower.includes("ac") || catLower.includes("air") || catLower.includes("condition") || catLower.includes("snow") || catLower.includes("ac_unit_rounded")) return AirVent;
+  if (catLower.includes("plumb") || catLower.includes("wrench") || catLower.includes("home_repair_service_rounded")) return Wrench;
   if (catLower.includes("clean") || catLower.includes("sparkle")) return Sparkles;
   if (catLower.includes("carpent") || catLower.includes("hammer")) return Hammer;
   if (catLower.includes("paint")) return Paintbrush;
