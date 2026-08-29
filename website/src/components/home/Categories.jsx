@@ -102,6 +102,39 @@ const getCategoryCustomImage = (cat) => {
   return null;
 };
 
+const defaultCategoryBgImages = {
+  ac: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800",
+  electrician: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800",
+  washingmachine: "https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=800",
+  refrigerator: "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=800",
+  waterpurifier: "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=800",
+  chimney: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800",
+  cctv: "https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=800",
+  wrench: "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=800",
+  sparkles: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800",
+  hammer: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=800",
+  paintbrush: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=800",
+};
+
+const getCategoryBgImage = (cat) => {
+  if (cat.image) return cat.image;
+  if (cat.img) return cat.img;
+
+  const iconKey = (cat.icon || cat.name || "").toLowerCase();
+  if (iconKey.includes("ac") || iconKey.includes("air") || iconKey.includes("condition")) return defaultCategoryBgImages.ac;
+  if (iconKey.includes("electric") || iconKey.includes("light") || iconKey.includes("bulb")) return defaultCategoryBgImages.electrician;
+  if (iconKey.includes("wash") || iconKey.includes("laundry")) return defaultCategoryBgImages.washingmachine;
+  if (iconKey.includes("refrig") || iconKey.includes("fridge")) return defaultCategoryBgImages.refrigerator;
+  if (iconKey.includes("water") || iconKey.includes("purifi") || iconKey.includes("ro ")) return defaultCategoryBgImages.waterpurifier;
+  if (iconKey.includes("chimney") || iconKey.includes("exhaust")) return defaultCategoryBgImages.chimney;
+  if (iconKey.includes("cctv") || iconKey.includes("camera") || iconKey.includes("security")) return defaultCategoryBgImages.cctv;
+  if (iconKey.includes("plumb") || iconKey.includes("wrench")) return defaultCategoryBgImages.wrench;
+  if (iconKey.includes("clean") || iconKey.includes("sparkle")) return defaultCategoryBgImages.sparkles;
+  if (iconKey.includes("carpent") || iconKey.includes("hammer")) return defaultCategoryBgImages.hammer;
+  if (iconKey.includes("paint")) return defaultCategoryBgImages.paintbrush;
+  return defaultCategoryBgImages.ac;
+};
+
 export default function Categories() {
   const [categories, setCategories] = useState(fallbackCategories);
   const [allServices, setAllServices] = useState([]);
@@ -241,11 +274,11 @@ export default function Categories() {
           </motion.div>
         </div>
 
-        {/* Dynamic Database Parent Categories - INLINE & SCROLLABLE FOR DESKTOP & MOBILE */}
+        {/* Dynamic Database Parent Categories - INLINE & SCROLLABLE 1:1 FULL BACKGROUND CARDS */}
         {loading ? (
           <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
             {[1, 2, 3, 4, 5, 6, 7].map((idx) => (
-              <div key={idx} className="flex-shrink-0 w-32 sm:w-40 md:w-48 aspect-square rounded-3xl bg-slate-200 dark:bg-white/5 animate-pulse" />
+              <div key={idx} className="flex-shrink-0 w-36 sm:w-44 md:w-52 aspect-square rounded-3xl bg-slate-200 dark:bg-white/5 animate-pulse" />
             ))}
           </div>
         ) : (
@@ -255,6 +288,7 @@ export default function Categories() {
           >
             {categories.map((cat, index) => {
               const customImg = getCategoryCustomImage(cat);
+              const bgImg = customImg || getCategoryBgImage(cat);
               const IconComp = getCategoryIcon(cat);
               const preset = categoryStylePresets[index % categoryStylePresets.length];
 
@@ -263,26 +297,30 @@ export default function Categories() {
                   key={cat._id || index}
                   href={`/services?category=${encodeURIComponent(cat.name)}`}
                   title={cat.name}
-                  className="flex-shrink-0 w-32 sm:w-40 md:w-48 aspect-square snap-start group cursor-pointer outline-none"
+                  className="flex-shrink-0 w-36 sm:w-44 md:w-52 aspect-square snap-start group cursor-pointer outline-none"
                 >
-                  <div className={`relative w-full h-full flex flex-col items-center justify-center p-3 sm:p-5 rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 shadow-sm transition-all duration-300 group-hover:-translate-y-1.5 group-hover:shadow-2xl dark:group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.6)] backdrop-blur-md overflow-hidden ${preset.hoverBorder}`}>
+                  <div className={`relative w-full h-full rounded-3xl overflow-hidden border border-slate-200/80 dark:border-white/10 shadow-md transition-all duration-300 group-hover:-translate-y-1.5 group-hover:shadow-2xl dark:group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.6)] ${preset.hoverBorder}`}>
                     
-                    {/* Centered Icon/Image fitting 1:1 Card */}
-                    <div className="w-full h-full flex items-center justify-center p-1 sm:p-2">
-                      {customImg ? (
-                        <img
-                          src={customImg}
-                          alt={cat.name}
-                          className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-md"
-                        />
-                      ) : (
-                        <IconComp size={48} className={`${preset.color} transition-transform duration-300 group-hover:scale-110 sm:w-16 sm:h-16 md:w-20 md:h-20`} />
-                      )}
+                    {/* Full 1:1 Background Image */}
+                    <img
+                      src={bgImg}
+                      alt={cat.name}
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+
+                    {/* Dark Overlay Gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-slate-950/10 transition-opacity duration-300 group-hover:from-slate-950/95" />
+
+                    {/* Icon Badge Top Right */}
+                    <div className="absolute top-3 right-3 flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-slate-900/60 backdrop-blur-md border border-white/20 text-yellow-400 shadow-sm transition-transform duration-300 group-hover:scale-110">
+                      <IconComp size={16} />
                     </div>
 
-                    {/* Subtle Category Name Label on Hover */}
-                    <div className="absolute bottom-2 left-2 right-2 px-2 py-1 rounded-xl bg-slate-900/80 dark:bg-white/90 text-white dark:text-slate-950 text-[11px] font-black text-center backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 truncate">
-                      {cat.name}
+                    {/* Category Title Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 text-center z-10">
+                      <h3 className="text-xs sm:text-sm md:text-base font-black text-white drop-shadow-md line-clamp-1 group-hover:text-yellow-400 transition-colors">
+                        {cat.name}
+                      </h3>
                     </div>
 
                   </div>
