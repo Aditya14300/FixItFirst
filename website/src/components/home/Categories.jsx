@@ -6,6 +6,8 @@ import {
   Zap,
   Wrench,
   Snowflake,
+  AirVent,
+  Wind,
   Sparkles,
   Hammer,
   Paintbrush,
@@ -26,10 +28,13 @@ import { getCategories } from "@/app/services/categoryService";
 import { getServices } from "@/app/services/serviceService";
 
 const iconComponentMap = {
+  ac: AirVent,
+  aircondition: AirVent,
+  airconditioner: AirVent,
   zap: Zap,
   wrench: Wrench,
   snowflake: Snowflake,
-  wind: Snowflake,
+  wind: Wind,
   flame: Flame,
   droplets: Droplets,
   shield: Shield,
@@ -50,7 +55,7 @@ const categoryStylePresets = [
 ];
 
 const fallbackCategories = [
-  { _id: "cat-1", name: "AC Repair", icon: "snowflake", description: "AC Service, Installation & Gas Refill" },
+  { _id: "cat-1", name: "AC Repair", icon: "ac", description: "AC Service, Installation & Gas Refill" },
   { _id: "cat-2", name: "Electrician", icon: "zap", description: "Wiring, Switchboard & Appliance Repair" },
   { _id: "cat-3", name: "Plumbing", icon: "wrench", description: "Pipe Leakage, Tap Fitting & Drainage" },
   { _id: "cat-4", name: "Cleaning", icon: "sparkles", description: "Full Home Deep Cleaning & Sanitization" },
@@ -93,6 +98,7 @@ export default function Categories() {
 
   const getCategoryIcon = (cat) => {
     const iconKey = (cat.icon || cat.name || "").toLowerCase();
+    if (iconKey.includes("ac") || iconKey.includes("air") || iconKey.includes("condition") || iconKey.includes("snow") || iconKey.includes("cool")) return AirVent;
     if (iconKey.includes("zap") || iconKey.includes("electric")) return Zap;
     if (iconKey.includes("wrench") || iconKey.includes("plumb")) return Wrench;
     if (iconKey.includes("snow") || iconKey.includes("ac")) return Snowflake;

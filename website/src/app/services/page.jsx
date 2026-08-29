@@ -5,11 +5,24 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, ArrowRight, ChevronRight, Settings } from "lucide-react";
+import { Star, ArrowRight, ChevronRight, Settings, AirVent, Zap, Wrench, Sparkles, Hammer, Paintbrush, Tv, Layers, Snowflake } from "lucide-react";
 import Navbar from "@/components/layout/Navbar"; 
 import Footer from "@/components/layout/Footer"; 
 import { getCategories } from "@/app/services/categoryService";
 import { getServices } from "@/app/services/serviceService";
+
+const getCategoryIcon = (categoryName) => {
+  const catLower = (categoryName || "").toLowerCase();
+  if (catLower.includes("ac") || catLower.includes("air") || catLower.includes("condition") || catLower.includes("snow")) return AirVent;
+  if (catLower.includes("electric") || catLower.includes("zap")) return Zap;
+  if (catLower.includes("plumb") || catLower.includes("wrench")) return Wrench;
+  if (catLower.includes("clean") || catLower.includes("sparkle")) return Sparkles;
+  if (catLower.includes("carpent") || catLower.includes("hammer")) return Hammer;
+  if (catLower.includes("paint")) return Paintbrush;
+  if (catLower.includes("tv") || catLower.includes("appliance")) return Tv;
+  if (catLower.includes("all")) return Layers;
+  return Settings;
+};
 
 function ServicesContent() {
   const searchParams = useSearchParams();
@@ -110,13 +123,7 @@ function ServicesContent() {
                 
                 <div className="flex lg:flex-col gap-2.5 overflow-x-auto pb-3 lg:pb-0 hide-scrollbar snap-x snap-mandatory">
                   {categories.map((category) => {
-                    const catLower = category.toLowerCase();
-                    let IconComp = Settings;
-                    if (catLower.includes("all")) IconComp = Settings;
-                    else if (catLower.includes("ac") || catLower.includes("snow")) IconComp = Star;
-                    else if (catLower.includes("electric") || catLower.includes("zap")) IconComp = Star;
-                    else if (catLower.includes("plumb") || catLower.includes("wrench")) IconComp = Star;
-
+                    const IconComp = getCategoryIcon(category);
                     const isActive = activeCategory === category;
 
                     return (
@@ -132,6 +139,7 @@ function ServicesContent() {
                             : "bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-yellow-400/50"
                         }`}
                       >
+                        <IconComp size={18} className={isActive ? "text-slate-950" : "text-yellow-500"} />
                         <span>{category}</span>
                       </button>
                     );
