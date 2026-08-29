@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Zap,
@@ -20,13 +20,14 @@ import {
   Flame,
   Fan,
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   Layers,
   Shield,
   Wifi,
   X,
   CheckCircle2,
-  Clock,
-  ChevronRight
+  Clock
 } from "lucide-react";
 import Link from "next/link";
 import { getCategories } from "@/app/services/categoryService";
@@ -96,6 +97,14 @@ export default function Categories() {
   const [allServices, setAllServices] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
+  const scrollContainerRef = useRef(null);
+
+  const scroll = (direction) => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = direction === "left" ? -380 : 380;
+      scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     async function loadDbData() {
@@ -134,16 +143,14 @@ export default function Categories() {
     if (iconKey.includes("electric") || iconKey.includes("light") || iconKey.includes("bulb") || iconKey.includes("zap") || iconKey.includes("wiring")) return Lightbulb;
     if (iconKey.includes("ac") || iconKey.includes("air") || iconKey.includes("condition") || iconKey.includes("snow") || iconKey.includes("cool")) return AirVent;
     if (iconKey.includes("wrench") || iconKey.includes("plumb")) return Wrench;
-    if (iconKey.includes("snow") || iconKey.includes("ac")) return Snowflake;
-    if (iconKey.includes("flame") || iconKey.includes("chimney")) return Flame;
     if (iconKey.includes("droplet") || iconKey.includes("geyser")) return Droplets;
-    if (iconKey.includes("shield") || iconKey.includes("cctv")) return Shield;
+    if (iconKey.includes("shield")) return Shield;
     if (iconKey.includes("wifi") || iconKey.includes("router")) return Wifi;
     if (iconKey.includes("clean") || iconKey.includes("sparkle")) return Sparkles;
     if (iconKey.includes("hammer") || iconKey.includes("carpent")) return Hammer;
     if (iconKey.includes("paint")) return Paintbrush;
-    if (iconKey.includes("tv") || iconKey.includes("wash") || iconKey.includes("appliance")) return Tv;
-    return iconComponentMap[iconKey] || Layers;
+    if (iconKey.includes("tv") || iconKey.includes("appliance")) return Tv;
+    return iconComponentMap[iconKey] || Lightbulb;
   };
 
   // Get child services for selected category
@@ -158,24 +165,10 @@ export default function Categories() {
     });
   };
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.08, delayChildren: 0.1 },
-    },
-  };
-
-  const cardVariants = {
-    hidden: { opacity: 0, y: 30 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
-  };
-
   const childServices = getChildServices(selectedCategory);
 
   return (
-    <section className="relative w-full bg-slate-50 dark:bg-[#030712] py-20 lg:py-28 overflow-hidden transition-colors duration-300">
+    <section className="relative w-full bg-slate-50 dark:bg-[#030712] py-16 lg:py-24 overflow-hidden transition-colors duration-300">
       
       {/* Background Ambient Glow */}
       <div className="absolute top-1/4 left-[-10%] w-[500px] h-[500px] bg-yellow-400/10 rounded-full blur-[150px] pointer-events-none" />
@@ -184,7 +177,7 @@ export default function Categories() {
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="mb-14 flex flex-col items-center text-center md:flex-row md:items-end md:justify-between md:text-left">
+        <div className="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -192,27 +185,45 @@ export default function Categories() {
             transition={{ duration: 0.6 }}
             className="max-w-2xl"
           >
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-yellow-400/10 border border-yellow-400/20 text-yellow-600 dark:text-yellow-400 text-xs font-bold uppercase tracking-wider mb-3">
+              <Layers size={14} /> Categories
+            </span>
             <h2 className="text-3xl font-black text-slate-900 dark:text-white md:text-4xl lg:text-5xl tracking-tight">
-              What do you need <br className="hidden md:block" />
+              What service do you <br className="hidden md:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-amber-500">
-                help with today?
+                need today?
               </span>
             </h2>
-            <p className="mt-4 text-sm md:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-              Click on any parent category below to view all specialized child services fetched live from our database.
-            </p>
           </motion.div>
 
+          {/* Desktop Left/Right Controls & View All Button */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.6 }}
-            className="mt-6 md:mt-0 shrink-0"
+            className="flex items-center gap-3 shrink-0"
           >
+            <div className="hidden sm:flex items-center gap-2 mr-2">
+              <button
+                onClick={() => scroll("left")}
+                className="p-3 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-yellow-400 hover:text-slate-950 dark:hover:bg-yellow-400 dark:hover:text-slate-950 transition-all shadow-sm active:scale-95"
+                aria-label="Scroll Left"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={() => scroll("right")}
+                className="p-3 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-yellow-400 hover:text-slate-950 dark:hover:bg-yellow-400 dark:hover:text-slate-950 transition-all shadow-sm active:scale-95"
+                aria-label="Scroll Right"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+
             <Link
               href="/services"
-              className="group flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-6 py-3 font-semibold text-slate-900 dark:text-white transition-all hover:border-yellow-400 dark:hover:border-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-400/10"
+              className="group flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-6 py-3 font-semibold text-slate-900 dark:text-white transition-all hover:border-yellow-400 dark:hover:border-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-400/10 text-sm"
             >
               View All Services
               <ArrowRight size={18} className="transition-transform group-hover:translate-x-1 text-yellow-500" />
@@ -220,144 +231,63 @@ export default function Categories() {
           </motion.div>
         </div>
 
-        {/* Dynamic Database Parent Categories Grid */}
+        {/* Dynamic Database Parent Categories - INLINE & SCROLLABLE FOR DESKTOP & MOBILE */}
         {loading ? (
-          <div>
-            {/* Mobile Loading Skeleton */}
-            <div className="flex gap-4 overflow-x-auto pb-4 md:hidden hide-scrollbar">
-              {[1, 2, 3, 4, 5, 6].map((idx) => (
-                <div key={idx} className="flex-shrink-0 flex flex-col items-center gap-2">
-                  <div className="h-16 w-16 rounded-2xl bg-slate-200 dark:bg-white/5 animate-pulse" />
-                  <div className="h-3 w-14 rounded bg-slate-200 dark:bg-white/5 animate-pulse" />
-                </div>
-              ))}
-            </div>
-            {/* Desktop Loading Skeleton */}
-            <div className="hidden md:grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-              {[1, 2, 3, 4, 5, 6].map((idx) => (
-                <div key={idx} className="h-48 rounded-3xl bg-slate-200 dark:bg-white/5 animate-pulse" />
-              ))}
-            </div>
+          <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
+            {[1, 2, 3, 4, 5, 6, 7].map((idx) => (
+              <div key={idx} className="flex-shrink-0 w-44 h-56 rounded-3xl bg-slate-200 dark:bg-white/5 animate-pulse" />
+            ))}
           </div>
         ) : (
-          <>
-            {/* MOBILE VIEW: Horizontally Scrollable Icon Format (< md / Mobile Screens) */}
-            <div className="block md:hidden relative">
-              <div className="flex items-center justify-between mb-4 px-1">
-                <div>
-                  <span className="text-xs font-black uppercase tracking-wider text-yellow-600 dark:text-yellow-400 flex items-center gap-1.5">
-                    <Layers size={14} /> Categories
-                  </span>
-                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight mt-0.5">
-                    Select a Category
-                  </h3>
-                </div>
-                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1 bg-slate-100 dark:bg-white/5 px-2.5 py-1 rounded-full border border-slate-200 dark:border-white/10">
-                  Swipe horizontal <ArrowRight size={12} />
-                </span>
-              </div>
+          <div
+            ref={scrollContainerRef}
+            className="flex items-stretch gap-4 sm:gap-6 overflow-x-auto pb-6 pt-2 snap-x snap-mandatory scroll-smooth hide-scrollbar px-1 -mx-2 sm:mx-0"
+          >
+            {categories.map((cat, index) => {
+              const IconComp = getCategoryIcon(cat);
+              const preset = categoryStylePresets[index % categoryStylePresets.length];
+              const childCount = getChildServices(cat).length;
 
-              <div className="flex items-start gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory scroll-smooth hide-scrollbar px-1 -mx-2">
-                {categories.map((cat, index) => {
-                  const IconComp = getCategoryIcon(cat);
-                  const preset = categoryStylePresets[index % categoryStylePresets.length];
-                  const childCount = getChildServices(cat).length;
-
-                  return (
-                    <Link
-                      key={cat._id || index}
-                      href={`/services?category=${encodeURIComponent(cat.name)}`}
-                      className="flex flex-col items-center flex-shrink-0 w-22 snap-start group cursor-pointer text-center outline-none"
-                    >
-                      {/* Icon Pill Box */}
-                      <div className={`relative flex h-16 w-16 items-center justify-center rounded-2xl ${preset.bgColor} border border-slate-200/80 dark:border-white/10 shadow-md transition-all duration-300 group-hover:scale-105 backdrop-blur-md ${preset.hoverBorder}`}>
-                        <IconComp size={26} className={preset.color} />
-                        
-                        {/* Child count badge */}
-                        {childCount > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-yellow-400 text-slate-950 font-black text-[10px] shadow-md border border-yellow-300">
-                            {childCount}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Category Label */}
-                      <span className="mt-2 text-xs font-bold text-slate-900 dark:text-white line-clamp-2 leading-tight group-hover:text-yellow-500 transition-colors max-w-[80px]">
-                        {cat.name}
+              return (
+                <Link
+                  key={cat._id || index}
+                  href={`/services?category=${encodeURIComponent(cat.name)}`}
+                  className="flex-shrink-0 w-36 sm:w-44 md:w-52 snap-start group cursor-pointer outline-none"
+                >
+                  <div className={`relative h-full flex flex-col items-center justify-between p-4 sm:p-6 rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl dark:group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.6)] ${preset.hoverBorder}`}>
+                    
+                    {/* Badge */}
+                    {childCount > 0 && (
+                      <span className="absolute top-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-black bg-yellow-400 text-slate-950 shadow-sm">
+                        {childCount} Services
                       </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
+                    )}
 
-            {/* DESKTOP & TABLET VIEW: Multi-Column Grid Layout (>= md) */}
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-100px" }}
-              className="hidden md:grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6"
-            >
-              {categories.map((cat, index) => {
-                const IconComp = getCategoryIcon(cat);
-                const preset = categoryStylePresets[index % categoryStylePresets.length];
-                const bgImgUrl = cat.img || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800";
-                const childCount = getChildServices(cat).length;
+                    {/* Icon Container */}
+                    <div className={`mt-2 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl ${preset.bgColor} border border-slate-200/50 dark:border-white/10 group-hover:scale-110 transition-transform duration-300 backdrop-blur-md`}>
+                      <IconComp size={28} className={preset.color} />
+                    </div>
 
-                return (
-                  <motion.div key={cat._id || index} variants={cardVariants}>
-                    <Link
-                      href={`/services?category=${encodeURIComponent(cat.name)}`}
-                      className={`group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 p-6 shadow-sm transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-2xl dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.6)] ${preset.hoverBorder}`}
-                    >
-                      {/* Background Image Layer & Dark/Light Gradient Overlay */}
-                      <div className="absolute inset-0 z-0 overflow-hidden">
-                        <img
-                          src={bgImgUrl}
-                          alt={cat.name}
-                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-35 dark:opacity-25"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/95 via-white/85 to-white/90 dark:from-[#030712]/95 dark:via-[#030712]/90 dark:to-[#030712]/95 backdrop-blur-[2px] transition-colors duration-300" />
-                      </div>
+                    {/* Content Info */}
+                    <div className="mt-4 text-center w-full">
+                      <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors">
+                        {cat.name}
+                      </h3>
+                      <p className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400 line-clamp-1">
+                        {cat.description || "Verified Home Services"}
+                      </p>
+                    </div>
 
-                      {/* Card Content (Relative Z-10) */}
-                      <div className="relative z-10 flex flex-col h-full">
-                        <div className="flex items-center justify-between mb-4">
-                          {/* Icon Wrapper */}
-                          <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${preset.bgColor} transition-transform duration-300 group-hover:scale-110 backdrop-blur-md border border-slate-200/50 dark:border-white/10`}>
-                            <IconComp size={26} className={preset.color} />
-                          </div>
-
-                          {/* Child Service Count Badge */}
-                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-yellow-400/10 text-yellow-600 dark:text-yellow-400 border border-yellow-400/30 backdrop-blur-md">
-                            {childCount > 0 ? `${childCount} Services` : "Explore Services"}
-                          </span>
-                        </div>
-
-                        <h3 className="mb-2 text-xl font-bold text-slate-900 dark:text-white transition-colors group-hover:text-yellow-600 dark:group-hover:text-yellow-400">
-                          {cat.name}
-                        </h3>
-                        
-                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6 font-medium line-clamp-2">
-                          {cat.description || "Professional service delivered at your home."}
-                        </p>
-
-                        {/* Action Link */}
-                        <div className="mt-auto flex items-center justify-between text-sm font-bold text-slate-900 dark:text-white pt-2 border-t border-slate-200/60 dark:border-white/10">
-                          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Explore Services</span>
-                          <div className="flex items-center gap-1 text-yellow-500 group-hover:translate-x-1 transition-transform">
-                            <span>View All</span>
-                            <ChevronRight size={16} />
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  </motion.div>
-                );
-              })}
-            </motion.div>
-          </>
+                    {/* Card Action Link */}
+                    <div className="mt-4 pt-3 w-full border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:text-yellow-500 transition-colors">
+                      <span>Explore</span>
+                      <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform text-yellow-500" />
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         )}
 
         {/* CHILD SERVICES POPUP MODAL */}
