@@ -15,10 +15,12 @@ import {
   Lightbulb,
   WashingMachine,
   Cctv,
+  Refrigerator,
+  Droplets,
+  Flame,
+  Fan,
   ArrowRight,
   Layers,
-  Flame,
-  Droplets,
   Shield,
   Wifi,
   X,
@@ -45,6 +47,14 @@ const iconComponentMap = {
   cctv: Cctv,
   security: Cctv,
   camera: Cctv,
+  refrigerator: Refrigerator,
+  fridge: Refrigerator,
+  waterpurifier: Droplets,
+  purifier: Droplets,
+  water: Droplets,
+  chimney: Flame,
+  kitchenchimney: Flame,
+  exhaust: Fan,
   wrench: Wrench,
   snowflake: Snowflake,
   wind: Wind,
@@ -71,11 +81,14 @@ const fallbackCategories = [
   { _id: "cat-1", name: "AC Repair", icon: "ac", description: "AC Service, Installation & Gas Refill" },
   { _id: "cat-2", name: "Electrical & Lighting", icon: "lightbulb", description: "Wiring, Switchboard, Light Fittings & Repairs" },
   { _id: "cat-3", name: "Washing Machine", icon: "washingmachine", description: "Washing Machine Repair & Installation" },
-  { _id: "cat-4", name: "CCTV & Security", icon: "cctv", description: "CCTV Camera Setup, Installation & Maintenance" },
-  { _id: "cat-5", name: "Plumbing", icon: "wrench", description: "Pipe Leakage, Tap Fitting & Drainage" },
-  { _id: "cat-6", name: "Cleaning", icon: "sparkles", description: "Full Home Deep Cleaning & Sanitization" },
-  { _id: "cat-7", name: "Carpentry", icon: "hammer", description: "Furniture Repair & Custom Woodwork" },
-  { _id: "cat-8", name: "Painting", icon: "paintbrush", description: "Home Painting & Waterproofing" },
+  { _id: "cat-4", name: "Refrigerator Repair", icon: "refrigerator", description: "Fridge Service, Cooling Repair & Gas Charging" },
+  { _id: "cat-5", name: "Water Purifier (RO)", icon: "waterpurifier", description: "RO Filter Replacement, Service & Repair" },
+  { _id: "cat-6", name: "Kitchen Chimney", icon: "chimney", description: "Chimney Cleaning, Repair & Installation" },
+  { _id: "cat-7", name: "CCTV & Security", icon: "cctv", description: "CCTV Camera Setup, Installation & Maintenance" },
+  { _id: "cat-8", name: "Plumbing", icon: "wrench", description: "Pipe Leakage, Tap Fitting & Drainage" },
+  { _id: "cat-9", name: "Cleaning", icon: "sparkles", description: "Full Home Deep Cleaning & Sanitization" },
+  { _id: "cat-10", name: "Carpentry", icon: "hammer", description: "Furniture Repair & Custom Woodwork" },
+  { _id: "cat-11", name: "Painting", icon: "paintbrush", description: "Home Painting & Waterproofing" },
 ];
 
 export default function Categories() {
@@ -113,6 +126,9 @@ export default function Categories() {
 
   const getCategoryIcon = (cat) => {
     const iconKey = (cat.icon || cat.name || "").toLowerCase();
+    if (iconKey.includes("refrig") || iconKey.includes("fridge")) return Refrigerator;
+    if (iconKey.includes("water") || iconKey.includes("purifi") || iconKey.includes("ro ")) return Droplets;
+    if (iconKey.includes("chimney") || iconKey.includes("exhaust")) return Flame;
     if (iconKey.includes("wash") || iconKey.includes("laundry")) return WashingMachine;
     if (iconKey.includes("cctv") || iconKey.includes("camera") || iconKey.includes("security")) return Cctv;
     if (iconKey.includes("electric") || iconKey.includes("light") || iconKey.includes("bulb") || iconKey.includes("zap") || iconKey.includes("wiring")) return Lightbulb;

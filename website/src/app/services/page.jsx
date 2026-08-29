@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, ArrowRight, ChevronRight, Settings, AirVent, Zap, Wrench, Sparkles, Hammer, Paintbrush, Tv, Layers, Snowflake, Lightbulb, WashingMachine, Cctv } from "lucide-react";
+import { Star, ArrowRight, ChevronRight, Settings, AirVent, Zap, Wrench, Sparkles, Hammer, Paintbrush, Tv, Layers, Snowflake, Lightbulb, WashingMachine, Cctv, Refrigerator, Droplets, Flame, Fan } from "lucide-react";
 import Navbar from "@/components/layout/Navbar"; 
 import Footer from "@/components/layout/Footer"; 
 import { getCategories } from "@/app/services/categoryService";
@@ -13,6 +13,9 @@ import { getServices } from "@/app/services/serviceService";
 
 const getCategoryIcon = (categoryName) => {
   const catLower = (categoryName || "").toLowerCase();
+  if (catLower.includes("refrig") || catLower.includes("fridge")) return Refrigerator;
+  if (catLower.includes("water") || catLower.includes("purifi") || catLower.includes("ro ")) return Droplets;
+  if (catLower.includes("chimney") || catLower.includes("exhaust")) return Flame;
   if (catLower.includes("wash") || catLower.includes("laundry")) return WashingMachine;
   if (catLower.includes("cctv") || catLower.includes("camera") || catLower.includes("security")) return Cctv;
   if (catLower.includes("electric") || catLower.includes("light") || catLower.includes("bulb") || catLower.includes("zap") || catLower.includes("wiring")) return Lightbulb;
