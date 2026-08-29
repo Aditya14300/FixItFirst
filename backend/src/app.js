@@ -14,6 +14,10 @@ const staffRoutes = require("./routes/staffRoutes");
 
 const app = express();
 
+// Health check endpoints for server pings & cold start wakeups
+app.get("/health", (req, res) => res.status(200).send("OK"));
+app.get("/api/health", (req, res) => res.status(200).send("OK"));
+
 app.use(cors());
 app.use(helmet());
 app.use(morgan("dev"));
@@ -26,9 +30,6 @@ app.use("/api/services", serviceRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/staff", staffRoutes);
-
-app.get("/health", (req, res) => res.status(200).send("OK"));
-app.get("/api/health", (req, res) => res.status(200).send("OK"));
 
 app.get("/", (req, res) => {
     res.json({
