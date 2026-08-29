@@ -262,17 +262,15 @@ export default function Categories() {
                   const IconComp = getCategoryIcon(cat);
                   const preset = categoryStylePresets[index % categoryStylePresets.length];
                   const childCount = getChildServices(cat).length;
-                  const isSelected = selectedCategory?._id === cat._id;
 
                   return (
-                    <motion.button
+                    <Link
                       key={cat._id || index}
-                      whileTap={{ scale: 0.92 }}
-                      onClick={() => setSelectedCategory(cat)}
+                      href={`/services?category=${encodeURIComponent(cat.name)}`}
                       className="flex flex-col items-center flex-shrink-0 w-22 snap-start group cursor-pointer text-center outline-none"
                     >
                       {/* Icon Pill Box */}
-                      <div className={`relative flex h-16 w-16 items-center justify-center rounded-2xl ${preset.bgColor} border ${isSelected ? "border-yellow-400 ring-2 ring-yellow-400/40" : "border-slate-200/80 dark:border-white/10"} shadow-md transition-all duration-300 group-hover:scale-105 backdrop-blur-md ${preset.hoverBorder}`}>
+                      <div className={`relative flex h-16 w-16 items-center justify-center rounded-2xl ${preset.bgColor} border border-slate-200/80 dark:border-white/10 shadow-md transition-all duration-300 group-hover:scale-105 backdrop-blur-md ${preset.hoverBorder}`}>
                         <IconComp size={26} className={preset.color} />
                         
                         {/* Child count badge */}
@@ -287,7 +285,7 @@ export default function Categories() {
                       <span className="mt-2 text-xs font-bold text-slate-900 dark:text-white line-clamp-2 leading-tight group-hover:text-yellow-500 transition-colors max-w-[80px]">
                         {cat.name}
                       </span>
-                    </motion.button>
+                    </Link>
                   );
                 })}
               </div>
@@ -309,8 +307,8 @@ export default function Categories() {
 
                 return (
                   <motion.div key={cat._id || index} variants={cardVariants}>
-                    <div
-                      onClick={() => setSelectedCategory(cat)}
+                    <Link
+                      href={`/services?category=${encodeURIComponent(cat.name)}`}
                       className={`group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/10 p-6 shadow-sm transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-2xl dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.6)] ${preset.hoverBorder}`}
                     >
                       {/* Background Image Layer & Dark/Light Gradient Overlay */}
@@ -347,14 +345,14 @@ export default function Categories() {
 
                         {/* Action Link */}
                         <div className="mt-auto flex items-center justify-between text-sm font-bold text-slate-900 dark:text-white pt-2 border-t border-slate-200/60 dark:border-white/10">
-                          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Click to view options</span>
+                          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Explore Services</span>
                           <div className="flex items-center gap-1 text-yellow-500 group-hover:translate-x-1 transition-transform">
-                            <span>Select</span>
+                            <span>View All</span>
                             <ChevronRight size={16} />
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   </motion.div>
                 );
               })}
