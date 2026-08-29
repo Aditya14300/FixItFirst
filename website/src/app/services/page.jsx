@@ -21,6 +21,31 @@ const getCategoryCustomImage = (categoryName) => {
   return null;
 };
 
+const sortCategoriesWithCustomOrder = (catList) => {
+  if (!Array.isArray(catList) || catList.length === 0) return catList;
+
+  const normalCats = [];
+  let applianceCat = null;
+  let otherCat = null;
+
+  catList.forEach((cat) => {
+    const name = (typeof cat === "string" ? cat : cat?.name || "").toLowerCase();
+    if (name.includes("other")) {
+      otherCat = cat;
+    } else if (name.includes("appliance")) {
+      applianceCat = cat;
+    } else {
+      normalCats.push(cat);
+    }
+  });
+
+  const result = [...normalCats];
+  if (applianceCat) result.push(applianceCat);
+  if (otherCat) result.push(otherCat);
+
+  return result;
+};
+
 const getCategoryIcon = (categoryName) => {
   const catLower = (categoryName || "").toLowerCase();
   if (catLower.includes("refrig") || catLower.includes("fridge")) return Refrigerator;
@@ -60,7 +85,8 @@ function ServicesContent() {
         ]);
 
         if (catRes && catRes.success && Array.isArray(catRes.categories)) {
-          const catNames = ["All Categories", ...catRes.categories.map((c) => c.name)];
+          const sortedNames = sortCategoriesWithCustomOrder(catRes.categories.map((c) => c.name));
+          const catNames = ["All Categories", ...sortedNames];
           setCategories(catNames);
         }
 

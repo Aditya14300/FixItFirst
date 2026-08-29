@@ -116,6 +116,31 @@ const defaultCategoryBgImages = {
   paintbrush: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=800",
 };
 
+const sortCategoriesWithCustomOrder = (catList) => {
+  if (!Array.isArray(catList) || catList.length === 0) return catList;
+
+  const normalCats = [];
+  let applianceCat = null;
+  let otherCat = null;
+
+  catList.forEach((cat) => {
+    const name = (typeof cat === "string" ? cat : cat?.name || "").toLowerCase();
+    if (name.includes("other")) {
+      otherCat = cat;
+    } else if (name.includes("appliance")) {
+      applianceCat = cat;
+    } else {
+      normalCats.push(cat);
+    }
+  });
+
+  const result = [...normalCats];
+  if (applianceCat) result.push(applianceCat);
+  if (otherCat) result.push(otherCat);
+
+  return result;
+};
+
 const getCategoryBgImage = (cat) => {
   if (cat.image) return cat.image;
   if (cat.img) return cat.img;
@@ -136,7 +161,7 @@ const getCategoryBgImage = (cat) => {
 };
 
 export default function Categories() {
-  const [categories, setCategories] = useState(fallbackCategories);
+  const [categories, setCategories] = useState(sortCategoriesWithCustomOrder(fallbackCategories));
   const [allServices, setAllServices] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -158,9 +183,9 @@ export default function Categories() {
         ]);
 
         if (catRes && catRes.success && Array.isArray(catRes.categories) && catRes.categories.length > 0) {
-          setCategories(catRes.categories);
+          setCategories(sortCategoriesWithCustomOrder(catRes.categories));
         } else {
-          setCategories(fallbackCategories);
+          setCategories(sortCategoriesWithCustomOrder(fallbackCategories));
         }
 
         if (srvRes && srvRes.success && Array.isArray(srvRes.services)) {
