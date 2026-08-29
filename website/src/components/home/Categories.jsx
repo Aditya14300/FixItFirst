@@ -12,6 +12,9 @@ import {
   Hammer,
   Paintbrush,
   Tv,
+  Lightbulb,
+  WashingMachine,
+  Cctv,
   ArrowRight,
   Layers,
   Flame,
@@ -31,7 +34,17 @@ const iconComponentMap = {
   ac: AirVent,
   aircondition: AirVent,
   airconditioner: AirVent,
-  zap: Zap,
+  electrician: Lightbulb,
+  electrical: Lightbulb,
+  lightbulb: Lightbulb,
+  lighting: Lightbulb,
+  zap: Lightbulb,
+  washingmachine: WashingMachine,
+  washing: WashingMachine,
+  laundry: WashingMachine,
+  cctv: Cctv,
+  security: Cctv,
+  camera: Cctv,
   wrench: Wrench,
   snowflake: Snowflake,
   wind: Wind,
@@ -56,11 +69,13 @@ const categoryStylePresets = [
 
 const fallbackCategories = [
   { _id: "cat-1", name: "AC Repair", icon: "ac", description: "AC Service, Installation & Gas Refill" },
-  { _id: "cat-2", name: "Electrician", icon: "zap", description: "Wiring, Switchboard & Appliance Repair" },
-  { _id: "cat-3", name: "Plumbing", icon: "wrench", description: "Pipe Leakage, Tap Fitting & Drainage" },
-  { _id: "cat-4", name: "Cleaning", icon: "sparkles", description: "Full Home Deep Cleaning & Sanitization" },
-  { _id: "cat-5", name: "Carpentry", icon: "hammer", description: "Furniture Repair & Custom Woodwork" },
-  { _id: "cat-6", name: "Painting", icon: "paintbrush", description: "Home Painting & Waterproofing" },
+  { _id: "cat-2", name: "Electrical & Lighting", icon: "lightbulb", description: "Wiring, Switchboard, Light Fittings & Repairs" },
+  { _id: "cat-3", name: "Washing Machine", icon: "washingmachine", description: "Washing Machine Repair & Installation" },
+  { _id: "cat-4", name: "CCTV & Security", icon: "cctv", description: "CCTV Camera Setup, Installation & Maintenance" },
+  { _id: "cat-5", name: "Plumbing", icon: "wrench", description: "Pipe Leakage, Tap Fitting & Drainage" },
+  { _id: "cat-6", name: "Cleaning", icon: "sparkles", description: "Full Home Deep Cleaning & Sanitization" },
+  { _id: "cat-7", name: "Carpentry", icon: "hammer", description: "Furniture Repair & Custom Woodwork" },
+  { _id: "cat-8", name: "Painting", icon: "paintbrush", description: "Home Painting & Waterproofing" },
 ];
 
 export default function Categories() {
@@ -98,8 +113,10 @@ export default function Categories() {
 
   const getCategoryIcon = (cat) => {
     const iconKey = (cat.icon || cat.name || "").toLowerCase();
+    if (iconKey.includes("wash") || iconKey.includes("laundry")) return WashingMachine;
+    if (iconKey.includes("cctv") || iconKey.includes("camera") || iconKey.includes("security")) return Cctv;
+    if (iconKey.includes("electric") || iconKey.includes("light") || iconKey.includes("bulb") || iconKey.includes("zap") || iconKey.includes("wiring")) return Lightbulb;
     if (iconKey.includes("ac") || iconKey.includes("air") || iconKey.includes("condition") || iconKey.includes("snow") || iconKey.includes("cool")) return AirVent;
-    if (iconKey.includes("zap") || iconKey.includes("electric")) return Zap;
     if (iconKey.includes("wrench") || iconKey.includes("plumb")) return Wrench;
     if (iconKey.includes("snow") || iconKey.includes("ac")) return Snowflake;
     if (iconKey.includes("flame") || iconKey.includes("chimney")) return Flame;

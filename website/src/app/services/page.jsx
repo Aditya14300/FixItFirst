@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, ArrowRight, ChevronRight, Settings, AirVent, Zap, Wrench, Sparkles, Hammer, Paintbrush, Tv, Layers, Snowflake } from "lucide-react";
+import { Star, ArrowRight, ChevronRight, Settings, AirVent, Zap, Wrench, Sparkles, Hammer, Paintbrush, Tv, Layers, Snowflake, Lightbulb, WashingMachine, Cctv } from "lucide-react";
 import Navbar from "@/components/layout/Navbar"; 
 import Footer from "@/components/layout/Footer"; 
 import { getCategories } from "@/app/services/categoryService";
@@ -13,8 +13,10 @@ import { getServices } from "@/app/services/serviceService";
 
 const getCategoryIcon = (categoryName) => {
   const catLower = (categoryName || "").toLowerCase();
+  if (catLower.includes("wash") || catLower.includes("laundry")) return WashingMachine;
+  if (catLower.includes("cctv") || catLower.includes("camera") || catLower.includes("security")) return Cctv;
+  if (catLower.includes("electric") || catLower.includes("light") || catLower.includes("bulb") || catLower.includes("zap") || catLower.includes("wiring")) return Lightbulb;
   if (catLower.includes("ac") || catLower.includes("air") || catLower.includes("condition") || catLower.includes("snow")) return AirVent;
-  if (catLower.includes("electric") || catLower.includes("zap")) return Zap;
   if (catLower.includes("plumb") || catLower.includes("wrench")) return Wrench;
   if (catLower.includes("clean") || catLower.includes("sparkle")) return Sparkles;
   if (catLower.includes("carpent") || catLower.includes("hammer")) return Hammer;
