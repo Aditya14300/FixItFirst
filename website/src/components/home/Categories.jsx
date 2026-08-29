@@ -109,7 +109,7 @@ const defaultCategoryBgImages = {
   refrigerator: "https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?w=800",
   waterpurifier: "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=800",
   chimney: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800",
-  cctv: "https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=800",
+  cctv: "https://res.cloudinary.com/dmsgeia9g/image/upload/v1788031878/3_hsecwy.png",
   wrench: "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=800",
   sparkles: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800",
   hammer: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=800",
@@ -212,13 +212,13 @@ export default function Categories() {
 
   return (
     <section className="relative w-full bg-slate-50 dark:bg-[#030712] py-16 lg:py-24 overflow-hidden transition-colors duration-300">
-      
+
       {/* Background Ambient Glow */}
       <div className="absolute top-1/4 left-[-10%] w-[500px] h-[500px] bg-yellow-400/10 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-[-10%] w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[150px] pointer-events-none" />
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
-        
+
         {/* Section Header */}
         <div className="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
           <motion.div
@@ -288,8 +288,7 @@ export default function Categories() {
           >
             {categories.map((cat, index) => {
               const customImg = getCategoryCustomImage(cat);
-              const bgImg = customImg || getCategoryBgImage(cat);
-              const IconComp = getCategoryIcon(cat);
+              const bgImg = (cat.image && cat.image.trim() !== "") ? cat.image : (cat.img && cat.img.trim() !== "") ? cat.img : (customImg || getCategoryBgImage(cat));
               const preset = categoryStylePresets[index % categoryStylePresets.length];
 
               return (
@@ -300,8 +299,8 @@ export default function Categories() {
                   className="flex-shrink-0 w-36 sm:w-44 md:w-52 aspect-square snap-start group cursor-pointer outline-none"
                 >
                   <div className={`relative w-full h-full rounded-3xl overflow-hidden border border-slate-200/80 dark:border-white/10 shadow-md transition-all duration-300 group-hover:-translate-y-1.5 group-hover:shadow-2xl dark:group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.6)] ${preset.hoverBorder}`}>
-                    
-                    {/* Full 1:1 Background Image */}
+
+                    {/* Full 1:1 Background Image (Fetched dynamically from DB) */}
                     <img
                       src={bgImg}
                       alt={cat.name}
@@ -310,11 +309,6 @@ export default function Categories() {
 
                     {/* Dark Overlay Gradient */}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-slate-950/10 transition-opacity duration-300 group-hover:from-slate-950/95" />
-
-                    {/* Icon Badge Top Right */}
-                    <div className="absolute top-3 right-3 flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-slate-900/60 backdrop-blur-md border border-white/20 text-yellow-400 shadow-sm transition-transform duration-300 group-hover:scale-110">
-                      <IconComp size={16} />
-                    </div>
 
                     {/* Category Title Overlay */}
                     <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 text-center z-10">
