@@ -275,6 +275,28 @@ function ServicesContent() {
 
           </div>
         </div>
+
+        {/* Floating Quick Category Switcher Bar (Always accessible without scrolling up) */}
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 max-w-[92vw] sm:max-w-2xl bg-slate-950/90 dark:bg-slate-900/95 backdrop-blur-xl border border-white/20 p-2 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-1.5 overflow-x-auto hide-scrollbar">
+          {categories.map((category) => {
+            const IconComp = getCategoryIcon(category);
+            const isActive = activeCategory === category;
+            return (
+              <button
+                key={`floating-${category}`}
+                onClick={() => handleCategorySelect(category)}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 ${
+                  isActive
+                    ? "bg-yellow-400 text-slate-950 shadow-md scale-105"
+                    : "text-slate-300 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <IconComp size={14} className={isActive ? "text-slate-950" : "text-yellow-400"} />
+                <span>{category}</span>
+              </button>
+            );
+          })}
+        </div>
       </main>
 
       <Footer />
