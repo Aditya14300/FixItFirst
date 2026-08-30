@@ -26,10 +26,6 @@ export default function Navbar() {
   ];  
 
   const handleBookService = () => {
-    if (!user) {
-      router.push("/login?redirect=/booking");
-      return;
-    }
     router.push("/booking");
   };
 
@@ -224,7 +220,7 @@ export default function Navbar() {
             
             <div className="pt-6 mt-auto">
               <Link
-                href="/book-service"
+                href="/booking"
                 onClick={() => setIsOpen(false)}
                 className="flex items-center justify-center gap-2 w-full py-4 rounded-full bg-slate-900 dark:bg-yellow-400 text-white dark:text-[#030712] font-black text-lg transition-transform active:scale-95 shadow-xl"
               >

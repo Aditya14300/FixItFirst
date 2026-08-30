@@ -25,7 +25,7 @@ export default function MobileBottomNav() {
     },
     {
       name: "My Bookings",
-      href: user ? "/my-bookings" : "/login?redirect=/my-bookings",
+      href: "/my-bookings",
       icon: CalendarCheck,
       isActive: pathname.startsWith("/my-bookings") || pathname.startsWith("/profile/bookings"),
     },
