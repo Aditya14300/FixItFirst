@@ -64,6 +64,17 @@ function ServicesContent() {
   const [activeCategory, setActiveCategory] = useState("All Categories");
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const servicesHeaderRef = useRef(null);
+
+  const handleCategorySelect = (category) => {
+    setActiveCategory(category);
+    setSearchTerm("");
+    if (servicesHeaderRef.current) {
+      servicesHeaderRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (typeof window !== "undefined") {
+      window.scrollTo({ top: 100, behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -131,7 +142,7 @@ function ServicesContent() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Breadcrumb & Title */}
-          <div className="mb-10">
+          <div ref={servicesHeaderRef} className="mb-10 scroll-mt-28">
             <h1 className="text-4xl font-black text-slate-900 dark:text-white">All Services</h1>
             <div className="flex items-center gap-2 mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
               <Link href="/" className="hover:text-yellow-500 transition-colors">Home</Link>
@@ -142,17 +153,17 @@ function ServicesContent() {
 
           <div className="flex flex-col lg:flex-row gap-8">
             
-            {/* LEFT SIDEBAR: Categories */}
+            {/* LEFT SIDEBAR: Categories (Sticky top navigation bar) */}
             <div className="w-full lg:w-64 shrink-0">
-              <div className="sticky top-24 lg:top-28 z-20 bg-slate-50/90 dark:bg-[#030712]/90 backdrop-blur-md lg:bg-transparent py-2 lg:py-0">
-                <div className="flex items-center justify-between mb-3 lg:mb-4">
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Categories</h3>
-                  <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400 lg:hidden">
-                    Swipe horizontal →
+              <div className="sticky top-20 lg:top-28 z-30 bg-slate-50/95 dark:bg-[#030712]/95 backdrop-blur-md lg:bg-transparent py-3 lg:py-0 border-b border-slate-200/60 dark:border-white/10 lg:border-none shadow-sm lg:shadow-none -mx-4 px-4 sm:mx-0 sm:px-0">
+                <div className="flex items-center justify-between mb-2 lg:mb-4">
+                  <h3 className="text-sm lg:text-lg font-bold text-slate-900 dark:text-white">Categories</h3>
+                  <span className="text-[11px] font-semibold text-yellow-600 dark:text-yellow-400 lg:hidden">
+                    Swipe →
                   </span>
                 </div>
                 
-                <div className="flex lg:flex-col gap-2.5 overflow-x-auto pb-3 lg:pb-0 hide-scrollbar snap-x snap-mandatory">
+                <div className="flex lg:flex-col gap-2.5 overflow-x-auto pb-2 lg:pb-0 hide-scrollbar snap-x snap-mandatory">
                   {categories.map((category) => {
                     const IconComp = getCategoryIcon(category);
                     const isActive = activeCategory === category;
@@ -160,10 +171,7 @@ function ServicesContent() {
                     return (
                       <button
                         key={category}
-                        onClick={() => {
-                          setActiveCategory(category);
-                          setSearchTerm("");
-                        }}
+                        onClick={() => handleCategorySelect(category)}
                         className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap snap-start transition-all duration-300 border shrink-0 ${
                           isActive
                             ? "bg-yellow-400 text-slate-950 border-yellow-400 shadow-md shadow-yellow-400/20"
