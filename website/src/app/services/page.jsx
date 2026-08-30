@@ -142,7 +142,7 @@ function ServicesContent() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Breadcrumb & Title */}
-          <div ref={servicesHeaderRef} className="mb-10 scroll-mt-28">
+          <div ref={servicesHeaderRef} className="mb-6 scroll-mt-28">
             <h1 className="text-4xl font-black text-slate-900 dark:text-white">All Services</h1>
             <div className="flex items-center gap-2 mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">
               <Link href="/" className="hover:text-yellow-500 transition-colors">Home</Link>
@@ -151,151 +151,117 @@ function ServicesContent() {
             </div>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-8">
-            
-            {/* LEFT SIDEBAR: Categories (Sticky top navigation bar) */}
-            <div className="w-full lg:w-64 shrink-0">
-              <div className="sticky top-20 lg:top-28 z-30 bg-slate-50/95 dark:bg-[#030712]/95 backdrop-blur-md lg:bg-transparent py-3 lg:py-0 border-b border-slate-200/60 dark:border-white/10 lg:border-none shadow-sm lg:shadow-none -mx-4 px-4 sm:mx-0 sm:px-0">
-                <div className="flex items-center justify-between mb-2 lg:mb-4">
-                  <h3 className="text-sm lg:text-lg font-bold text-slate-900 dark:text-white">Categories</h3>
-                  <span className="text-[11px] font-semibold text-yellow-600 dark:text-yellow-400 lg:hidden">
-                    Swipe →
-                  </span>
-                </div>
-                
-                <div className="flex lg:flex-col gap-2.5 overflow-x-auto pb-2 lg:pb-0 hide-scrollbar snap-x snap-mandatory">
-                  {categories.map((category) => {
-                    const IconComp = getCategoryIcon(category);
-                    const isActive = activeCategory === category;
+          {/* TOP FIXED / STICKY CATEGORY SWITCHER BAR */}
+          <div className="sticky top-[64px] sm:top-[76px] z-40 bg-slate-50/95 dark:bg-[#030712]/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/10 shadow-sm py-3.5 mb-8 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+            <div className="max-w-7xl mx-auto flex items-center gap-2.5 overflow-x-auto hide-scrollbar snap-x snap-mandatory">
+              {categories.map((category) => {
+                const IconComp = getCategoryIcon(category);
+                const isActive = activeCategory === category;
 
-                    return (
-                      <button
-                        key={category}
-                        onClick={() => handleCategorySelect(category)}
-                        className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap snap-start transition-all duration-300 border shrink-0 ${
-                          isActive
-                            ? "bg-yellow-400 text-slate-950 border-yellow-400 shadow-md shadow-yellow-400/20"
-                            : "bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-yellow-400/50"
-                        }`}
-                      >
-                        <IconComp size={18} className={isActive ? "text-slate-950" : "text-yellow-500"} />
-                        <span>{category}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+                return (
+                  <button
+                    key={category}
+                    onClick={() => handleCategorySelect(category)}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap snap-start transition-all duration-300 border shrink-0 ${
+                      isActive
+                        ? "bg-yellow-400 text-slate-950 border-yellow-400 shadow-md shadow-yellow-400/20 scale-105"
+                        : "bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-yellow-400/50 hover:bg-yellow-400/10"
+                    }`}
+                  >
+                    <IconComp size={16} className={isActive ? "text-slate-950" : "text-yellow-500"} />
+                    <span>{category}</span>
+                  </button>
+                );
+              })}
             </div>
-
-            {/* RIGHT SIDE: Services Grid */}
-            <div className="flex-1">
-              {loading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="h-72 rounded-3xl bg-slate-200 dark:bg-white/5 animate-pulse" />
-                  ))}
-                </div>
-              ) : (
-                <motion.div 
-                  layout
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-                >
-                  <AnimatePresence mode="popLayout">
-                    {filteredServices.map((service) => (
-                      <motion.div
-                        layout
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        transition={{ duration: 0.3 }}
-                        key={service._id || service.name}
-                        className="group flex flex-col overflow-hidden rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-xl transition-all duration-300"
-                      >
-                        {/* Card Image */}
-                        <div className="relative h-48 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                          <Image
-                            src={service.image || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500"}
-                            alt={service.name}
-                            fill
-                            className="object-cover transition-transform duration-500 group-hover:scale-110"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        </div>
-
-                        {/* Card Content */}
-                        <div className="flex flex-col flex-1 p-5">
-                          <div className="flex justify-between items-start mb-2">
-                            <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
-                              {service.name}
-                            </h3>
-                          </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4">
-                            {service.description}
-                          </p>
-                          
-                          {/* Price & Rating */}
-                          <div className="mt-auto pt-4 flex items-center justify-between border-t border-slate-100 dark:border-white/5">
-                            <div>
-                              <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Starts From</p>
-                              <p className="text-xl font-black text-slate-900 dark:text-white">
-                                ₹{service.discountPrice || service.price}
-                              </p>
-                            </div>
-                            
-                            <div className="flex items-center gap-1 bg-yellow-400/10 px-2 py-1 rounded-md">
-                              <Star size={14} className="fill-yellow-500 text-yellow-500" />
-                              <span className="text-sm font-bold text-slate-900 dark:text-white">4.8</span>
-                            </div>
-                          </div>
-
-                          {/* Action Button: Dynamic Booking Link */}
-                          <Link 
-                            href={`/booking?service=${encodeURIComponent(service.name)}&price=${service.discountPrice || service.price}`}
-                            className="mt-5 flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white font-bold text-sm transition-all group-hover:bg-yellow-400 group-hover:text-slate-900"
-                          >
-                            Book Now
-                            <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
-                          </Link>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </motion.div>
-              )}
-
-              {/* Empty State Fallback */}
-              {!loading && filteredServices.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <Settings className="text-slate-300 dark:text-slate-700 mb-4" size={48} />
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">No services found</h3>
-                  <p className="text-slate-500 mt-2">We are currently updating our services in this category.</p>
-                </div>
-              )}
-            </div>
-
           </div>
-        </div>
 
-        {/* Floating Quick Category Switcher Bar (Always accessible without scrolling up) */}
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 max-w-[92vw] sm:max-w-2xl bg-slate-950/90 dark:bg-slate-900/95 backdrop-blur-xl border border-white/20 p-2 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-1.5 overflow-x-auto hide-scrollbar">
-          {categories.map((category) => {
-            const IconComp = getCategoryIcon(category);
-            const isActive = activeCategory === category;
-            return (
-              <button
-                key={`floating-${category}`}
-                onClick={() => handleCategorySelect(category)}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 ${
-                  isActive
-                    ? "bg-yellow-400 text-slate-950 shadow-md scale-105"
-                    : "text-slate-300 hover:text-white hover:bg-white/10"
-                }`}
+          {/* SERVICES GRID */}
+          <div className="w-full">
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="h-72 rounded-3xl bg-slate-200 dark:bg-white/5 animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              <motion.div 
+                layout
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
               >
-                <IconComp size={14} className={isActive ? "text-slate-950" : "text-yellow-400"} />
-                <span>{category}</span>
-              </button>
-            );
-          })}
+                <AnimatePresence mode="popLayout">
+                  {filteredServices.map((service) => (
+                    <motion.div
+                      layout
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.3 }}
+                      key={service._id || service.name}
+                      className="group flex flex-col overflow-hidden rounded-3xl bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-xl transition-all duration-300"
+                    >
+                      {/* Card Image */}
+                      <div className="relative h-48 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                        <Image
+                          src={service.image || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500"}
+                          alt={service.name}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
+
+                      {/* Card Content */}
+                      <div className="flex flex-col flex-1 p-5">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">
+                            {service.name}
+                          </h3>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4">
+                          {service.description}
+                        </p>
+                        
+                        {/* Price & Rating */}
+                        <div className="mt-auto pt-4 flex items-center justify-between border-t border-slate-100 dark:border-white/5">
+                          <div>
+                            <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Starts From</p>
+                            <p className="text-xl font-black text-slate-900 dark:text-white">
+                              ₹{service.discountPrice || service.price}
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center gap-1 bg-yellow-400/10 px-2 py-1 rounded-md">
+                            <Star size={14} className="fill-yellow-500 text-yellow-500" />
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">4.8</span>
+                          </div>
+                        </div>
+
+                        {/* Action Button: Dynamic Booking Link */}
+                        <Link 
+                          href={`/booking?service=${encodeURIComponent(service.name)}&price=${service.discountPrice || service.price}`}
+                          className="mt-5 flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white font-bold text-sm transition-all group-hover:bg-yellow-400 group-hover:text-slate-900"
+                        >
+                          Book Now
+                          <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+                        </Link>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            )}
+
+            {/* Empty State Fallback */}
+            {!loading && filteredServices.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <Settings className="text-slate-300 dark:text-slate-700 mb-4" size={48} />
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">No services found</h3>
+                <p className="text-slate-500 mt-2">We are currently updating our services in this category.</p>
+              </div>
+            )}
+          </div>
+
         </div>
       </main>
 
