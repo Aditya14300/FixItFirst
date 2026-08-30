@@ -11,16 +11,6 @@ import Footer from "@/components/layout/Footer";
 import { getCategories } from "@/app/services/categoryService";
 import { getServices } from "@/app/services/serviceService";
 
-const AC_ICON_URL = "https://res.cloudinary.com/dmsgeia9g/image/upload/v1788029846/Untitled_design_9_cx7odb.png";
-
-const getCategoryCustomImage = (categoryName) => {
-  const catLower = (categoryName || "").toLowerCase();
-  if (catLower.includes("ac") || catLower.includes("air") || catLower.includes("condition")) {
-    return AC_ICON_URL;
-  }
-  return null;
-};
-
 const sortCategoriesWithCustomOrder = (catList) => {
   if (!Array.isArray(catList) || catList.length === 0) return catList;
 
@@ -164,7 +154,6 @@ function ServicesContent() {
                 
                 <div className="flex lg:flex-col gap-2.5 overflow-x-auto pb-3 lg:pb-0 hide-scrollbar snap-x snap-mandatory">
                   {categories.map((category) => {
-                    const customImg = getCategoryCustomImage(category);
                     const IconComp = getCategoryIcon(category);
                     const isActive = activeCategory === category;
 
@@ -181,11 +170,7 @@ function ServicesContent() {
                             : "bg-white dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 hover:border-yellow-400/50"
                         }`}
                       >
-                        {customImg ? (
-                          <img src={customImg} alt={category} className="w-5 h-5 object-contain shrink-0" />
-                        ) : (
-                          <IconComp size={18} className={isActive ? "text-slate-950" : "text-yellow-500"} />
-                        )}
+                        <IconComp size={18} className={isActive ? "text-slate-950" : "text-yellow-500"} />
                         <span>{category}</span>
                       </button>
                     );
